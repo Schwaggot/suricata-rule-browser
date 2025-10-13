@@ -1,0 +1,66 @@
+# Suricata Rule Sources Configuration
+# This file defines where the Suricata Rule Browser should load rules from
+
+# Rule sources can be:
+# 1. URL downloads (tar.gz, zip, or individual .rules files)
+# 2. Local directories containing .rules files
+# 3. Individual local .rules files
+
+sources:
+  # Emerging Threats Open Ruleset
+  - name: et-open
+    type: url
+    description: Emerging Threats Open Ruleset
+    url: https://rules.emergingthreats.net/open/suricata-7.0/emerging.rules.tar.gz
+    file_type: tar.gz
+    cache_hours: 24
+    enabled: true
+
+  # Stamus Networks Free Ruleset
+  - name: stamus
+    type: url
+    description: Stamus Networks Free Ruleset
+    url: https://ti.stamus-networks.io/open/stamus-lateral-rules.tar.gz
+    file_type: tar.gz
+    cache_hours: 24
+    enabled: true
+
+  # Abuse.ch SSL Blacklist
+  - name: sslbl
+    type: url
+    description: SSL Certificate Blacklist
+    url: https://sslbl.abuse.ch/blacklist/sslblacklist_tls_cert.tar.gz
+    file_type: tar.gz
+    cache_hours: 24
+    enabled: true
+
+  # Example: Local directory source
+  # - name: custom-local
+  #   type: directory
+  #   description: Custom local rules
+  #   path: /path/to/custom/rules
+  #   enabled: true
+
+  # Example: Single local rules file
+  # - name: my-rules
+  #   type: file
+  #   description: My custom rules file
+  #   path: /path/to/my-rules.rules
+  #   enabled: true
+
+  # Example: Another URL source (zip file)
+  # - name: custom-rules
+  #   type: url
+  #   description: Custom rules from URL
+  #   url: https://example.com/rules.zip
+  #   file_type: zip
+  #   cache_hours: 12
+  #   enabled: true
+
+  # Built-in example rules (disabled by default)
+  - name: local
+    type: directory
+    description: Local example and custom rules
+    path: data/rules
+    enabled: false
+    exclude_subdirs: true  # Don't load rules from subdirectories (those are from downloaded sources)

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suricata Rule Browser</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Suricata Rule Browser</h1>
+            <p class="subtitle">Browse and search Suricata IDS rules</p>
+        </header>
+
+        <div class="stats-section" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-rules">0</div>
+                <div class="stat-label">Total Rules</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="filtered-rules">0</div>
+                <div class="stat-label">Filtered Rules</div>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="search-box">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Search rules (message, SID, tags)..."
+                    autocomplete="off"
+                >
+                <button id="search-btn" class="btn btn-primary">Search</button>
+                <button id="clear-btn" class="btn btn-secondary">Clear</button>
+            </div>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="action-filter">Action:</label>
+                    <select id="action-filter">
+                        <option value="">All</option>
+                        <option value="alert">Alert</option>
+                        <option value="drop">Drop</option>
+                        <option value="reject">Reject</option>
+                        <option value="pass">Pass</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="protocol-filter">Protocol:</label>
+                    <select id="protocol-filter">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="classtype-filter">Class Type:</label>
+                    <select id="classtype-filter">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="priority-filter">Priority:</label>
+                    <select id="priority-filter">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="source-filter">Source:</label>
+                    <select id="source-filter">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-by">Sort By:</label>
+                    <select id="sort-by">
+                        <option value="sid">SID</option>
+                        <option value="priority">Priority</option>
+                        <option value="msg">Message</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-order">Order:</label>
+                    <select id="sort-order">
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading rules...</p>
+            </div>
+
+            <div id="error-message" class="error-message" style="display: none;"></div>
+
+            <div id="rules-list" class="rules-list"></div>
+        </div>
+
+        <div class="pagination" id="pagination">
+            <button id="prev-page" class="btn btn-secondary">Previous</button>
+            <span id="page-info">Page 1</span>
+            <button id="next-page" class="btn btn-secondary">Next</button>
+        </div>
+    </div>
+
+    <!-- Rule Detail Modal -->
+    <div id="rule-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="rule-detail"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
