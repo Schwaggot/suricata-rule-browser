@@ -5,12 +5,78 @@ let currentPage = 1;
 let currentFilters = {};
 let totalRules = 0;
 
+// Store Choices.js instances for all filter dropdowns
+let choicesInstances = {};
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
+    initializeChoices();
     initializeEventListeners();
     loadStats();
     loadRules();
 });
+
+// Initialize Choices.js for all filter dropdowns
+function initializeChoices() {
+    const filterIds = [
+        'action-filter',
+        'protocol-filter',
+        'classtype-filter',
+        'priority-filter',
+        'source-filter',
+        'category-filter',
+        'severity-filter',
+        'attack-target-filter',
+        'deployment-filter',
+        'affected-product-filter',
+        'confidence-filter',
+        'performance-filter'
+    ];
+
+    filterIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            const choices = new Choices(element, {
+                removeItemButton: true,
+                searchEnabled: true,
+                searchPlaceholderValue: 'Search...',
+                placeholder: true,
+                placeholderValue: 'Select options',
+                itemSelectText: '',
+                shouldSort: false,
+                // Customize the no results text
+                noResultsText: 'No options found',
+                noChoicesText: 'No options available'
+            });
+
+            choicesInstances[id] = choices;
+
+            // Add clear all button to the filter group
+            const filterGroup = element.closest('.filter-group');
+            if (filterGroup) {
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'filter-clear-btn';
+                clearBtn.innerHTML = '×';
+                clearBtn.title = 'Clear this filter';
+                clearBtn.type = 'button';
+                clearBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    choices.removeActiveItems();
+                    handleFilterChange();
+                });
+
+                // Insert the clear button after the label
+                const label = filterGroup.querySelector('label');
+                if (label) {
+                    label.style.display = 'flex';
+                    label.style.justifyContent = 'space-between';
+                    label.style.alignItems = 'center';
+                    label.appendChild(clearBtn);
+                }
+            }
+        }
+    });
+}
 
 // Set up event listeners
 function initializeEventListeners() {
@@ -27,6 +93,13 @@ function initializeEventListeners() {
     document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);
     document.getElementById('priority-filter').addEventListener('change', handleFilterChange);
     document.getElementById('source-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('category-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('severity-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('attack-target-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('deployment-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('affected-product-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('confidence-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('performance-filter').addEventListener('change', handleFilterChange);
     document.getElementById('sort-by').addEventListener('change', handleFilterChange);
     document.getElementById('sort-order').addEventListener('change', handleFilterChange);
 
@@ -56,65 +129,220 @@ async function loadStats() {
         document.getElementById('total-rules').textContent = data.total_rules;
 
         // Populate filter dropdowns
+        populateActionFilter(data.actions);
         populateProtocolFilter(data.protocols);
         populateClasstypeFilter(data.classtypes);
         populatePriorityFilter(data.priorities);
         populateSourceFilter(data.sources);
+        populateCategoryFilter(data.categories);
+        populateSeverityFilter(data.signature_severities);
+        populateAttackTargetFilter(data.attack_targets);
+        populateDeploymentFilter(data.deployments);
+        populateAffectedProductFilter(data.affected_products);
+        populateConfidenceFilter(data.confidences);
+        populatePerformanceFilter(data.performance_impacts);
     } catch (error) {
         console.error('Error loading stats:', error);
     }
 }
 
+// Populate action filter dropdown
+function populateActionFilter(actions) {
+    const sortedActions = Object.keys(actions).sort();
+    const choices = sortedActions.map(action => ({
+        value: action,
+        label: `${action} (${actions[action]})`
+    }));
+
+    if (choicesInstances['action-filter']) {
+        choicesInstances['action-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
 // Populate protocol filter dropdown
 function populateProtocolFilter(protocols) {
-    const select = document.getElementById('protocol-filter');
     const sortedProtocols = Object.keys(protocols).sort();
+    const choices = sortedProtocols.map(protocol => ({
+        value: protocol,
+        label: `${protocol} (${protocols[protocol]})`
+    }));
 
-    sortedProtocols.forEach(protocol => {
-        const option = document.createElement('option');
-        option.value = protocol;
-        option.textContent = `${protocol} (${protocols[protocol]})`;
-        select.appendChild(option);
-    });
+    if (choicesInstances['protocol-filter']) {
+        choicesInstances['protocol-filter'].setChoices(choices, 'value', 'label', true);
+    }
 }
 
 // Populate classtype filter dropdown
 function populateClasstypeFilter(classtypes) {
-    const select = document.getElementById('classtype-filter');
     const sortedClasstypes = Object.keys(classtypes).sort();
+    const choices = sortedClasstypes.map(classtype => ({
+        value: classtype,
+        label: `${classtype} (${classtypes[classtype]})`
+    }));
 
-    sortedClasstypes.forEach(classtype => {
-        const option = document.createElement('option');
-        option.value = classtype;
-        option.textContent = `${classtype} (${classtypes[classtype]})`;
-        select.appendChild(option);
-    });
+    if (choicesInstances['classtype-filter']) {
+        choicesInstances['classtype-filter'].setChoices(choices, 'value', 'label', true);
+    }
 }
 
 // Populate priority filter dropdown
 function populatePriorityFilter(priorities) {
-    const select = document.getElementById('priority-filter');
-    const sortedPriorities = Object.keys(priorities).sort((a, b) => a - b);
+    const filterGroup = document.getElementById('priority-filter')?.closest('.filter-group');
 
-    sortedPriorities.forEach(priority => {
-        const option = document.createElement('option');
-        option.value = priority;
-        option.textContent = `Priority ${priority} (${priorities[priority]})`;
-        select.appendChild(option);
-    });
+    if (!priorities || Object.keys(priorities).length === 0) {
+        // Hide the filter group if no priorities available
+        if (filterGroup) {
+            filterGroup.style.display = 'none';
+        }
+        return;
+    }
+
+    // Show the filter group
+    if (filterGroup) {
+        filterGroup.style.display = 'flex';
+    }
+
+    const sortedPriorities = Object.keys(priorities).sort((a, b) => Number(a) - Number(b));
+    const choices = sortedPriorities.map(priority => ({
+        value: priority,
+        label: `Priority ${priority} (${priorities[priority]})`
+    }));
+
+    if (choicesInstances['priority-filter']) {
+        choicesInstances['priority-filter'].setChoices(choices, 'value', 'label', true);
+    }
 }
 
 // Populate source filter dropdown
 function populateSourceFilter(sources) {
-    const select = document.getElementById('source-filter');
     const sortedSources = Object.keys(sources).sort();
+    const choices = sortedSources.map(source => ({
+        value: source,
+        label: `${source} (${sources[source]})`
+    }));
 
-    sortedSources.forEach(source => {
-        const option = document.createElement('option');
-        option.value = source;
-        option.textContent = `${source} (${sources[source]})`;
-        select.appendChild(option);
-    });
+    if (choicesInstances['source-filter']) {
+        choicesInstances['source-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate category filter dropdown
+function populateCategoryFilter(categories) {
+    if (!categories || Object.keys(categories).length === 0) {
+        return;
+    }
+
+    const sortedCategories = Object.keys(categories).sort();
+    const choices = sortedCategories.map(category => ({
+        value: category,
+        label: `${category} (${categories[category]})`
+    }));
+
+    if (choicesInstances['category-filter']) {
+        choicesInstances['category-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate severity filter dropdown
+function populateSeverityFilter(severities) {
+    if (!severities || Object.keys(severities).length === 0) {
+        return;
+    }
+
+    const sortedSeverities = Object.keys(severities).sort();
+    const choices = sortedSeverities.map(severity => ({
+        value: severity,
+        label: `${severity} (${severities[severity]})`
+    }));
+
+    if (choicesInstances['severity-filter']) {
+        choicesInstances['severity-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate attack target filter dropdown
+function populateAttackTargetFilter(targets) {
+    if (!targets || Object.keys(targets).length === 0) {
+        return;
+    }
+
+    const sortedTargets = Object.keys(targets).sort();
+    const choices = sortedTargets.map(target => ({
+        value: target,
+        label: `${target} (${targets[target]})`
+    }));
+
+    if (choicesInstances['attack-target-filter']) {
+        choicesInstances['attack-target-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate deployment filter dropdown
+function populateDeploymentFilter(deployments) {
+    if (!deployments || Object.keys(deployments).length === 0) {
+        return;
+    }
+
+    const sortedDeployments = Object.keys(deployments).sort();
+    const choices = sortedDeployments.map(deployment => ({
+        value: deployment,
+        label: `${deployment} (${deployments[deployment]})`
+    }));
+
+    if (choicesInstances['deployment-filter']) {
+        choicesInstances['deployment-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate affected product filter dropdown
+function populateAffectedProductFilter(products) {
+    if (!products || Object.keys(products).length === 0) {
+        return;
+    }
+
+    const sortedProducts = Object.keys(products).sort();
+    const choices = sortedProducts.map(product => ({
+        value: product,
+        label: `${product} (${products[product]})`
+    }));
+
+    if (choicesInstances['affected-product-filter']) {
+        choicesInstances['affected-product-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate confidence filter dropdown
+function populateConfidenceFilter(confidences) {
+    if (!confidences || Object.keys(confidences).length === 0) {
+        return;
+    }
+
+    const sortedConfidences = Object.keys(confidences).sort();
+    const choices = sortedConfidences.map(confidence => ({
+        value: confidence,
+        label: `${confidence} (${confidences[confidence]})`
+    }));
+
+    if (choicesInstances['confidence-filter']) {
+        choicesInstances['confidence-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate performance filter dropdown
+function populatePerformanceFilter(impacts) {
+    if (!impacts || Object.keys(impacts).length === 0) {
+        return;
+    }
+
+    const sortedImpacts = Object.keys(impacts).sort();
+    const choices = sortedImpacts.map(impact => ({
+        value: impact,
+        label: `${impact} (${impacts[impact]})`
+    }));
+
+    if (choicesInstances['performance-filter']) {
+        choicesInstances['performance-filter'].setChoices(choices, 'value', 'label', true);
+    }
 }
 
 // Handle search
@@ -132,11 +360,14 @@ function handleFilterChange() {
 // Clear all filters
 function clearFilters() {
     document.getElementById('search-input').value = '';
-    document.getElementById('action-filter').value = '';
-    document.getElementById('protocol-filter').value = '';
-    document.getElementById('classtype-filter').value = '';
-    document.getElementById('priority-filter').value = '';
-    document.getElementById('source-filter').value = '';
+
+    // Clear all Choices.js instances
+    Object.keys(choicesInstances).forEach(key => {
+        if (choicesInstances[key]) {
+            choicesInstances[key].removeActiveItems();
+        }
+    });
+
     document.getElementById('sort-by').value = 'sid';
     document.getElementById('sort-order').value = 'asc';
     currentPage = 1;
@@ -154,20 +385,66 @@ function buildQueryParams() {
     const search = document.getElementById('search-input').value.trim();
     if (search) params.append('search', search);
 
-    const action = document.getElementById('action-filter').value;
-    if (action) params.append('action', action);
+    // Get selected values from Choices.js instances
+    const action = choicesInstances['action-filter']?.getValue(true);
+    if (action && action.length > 0) {
+        action.forEach(val => params.append('action', val));
+    }
 
-    const protocol = document.getElementById('protocol-filter').value;
-    if (protocol) params.append('protocol', protocol);
+    const protocol = choicesInstances['protocol-filter']?.getValue(true);
+    if (protocol && protocol.length > 0) {
+        protocol.forEach(val => params.append('protocol', val));
+    }
 
-    const classtype = document.getElementById('classtype-filter').value;
-    if (classtype) params.append('classtype', classtype);
+    const classtype = choicesInstances['classtype-filter']?.getValue(true);
+    if (classtype && classtype.length > 0) {
+        classtype.forEach(val => params.append('classtype', val));
+    }
 
-    const priority = document.getElementById('priority-filter').value;
-    if (priority) params.append('priority', priority);
+    const priority = choicesInstances['priority-filter']?.getValue(true);
+    if (priority && priority.length > 0) {
+        priority.forEach(val => params.append('priority', val));
+    }
 
-    const source = document.getElementById('source-filter').value;
-    if (source) params.append('source', source);
+    const source = choicesInstances['source-filter']?.getValue(true);
+    if (source && source.length > 0) {
+        source.forEach(val => params.append('source', val));
+    }
+
+    const category = choicesInstances['category-filter']?.getValue(true);
+    if (category && category.length > 0) {
+        category.forEach(val => params.append('category', val));
+    }
+
+    const severity = choicesInstances['severity-filter']?.getValue(true);
+    if (severity && severity.length > 0) {
+        severity.forEach(val => params.append('signature_severity', val));
+    }
+
+    const attackTarget = choicesInstances['attack-target-filter']?.getValue(true);
+    if (attackTarget && attackTarget.length > 0) {
+        attackTarget.forEach(val => params.append('attack_target', val));
+    }
+
+    const deployment = choicesInstances['deployment-filter']?.getValue(true);
+    if (deployment && deployment.length > 0) {
+        deployment.forEach(val => params.append('deployment', val));
+    }
+
+    const affectedProduct = choicesInstances['affected-product-filter']?.getValue(true);
+    if (affectedProduct && affectedProduct.length > 0) {
+        affectedProduct.forEach(val => params.append('affected_product', val));
+    }
+
+    const confidence = choicesInstances['confidence-filter']?.getValue(true);
+    if (confidence && confidence.length > 0) {
+        confidence.forEach(val => params.append('confidence', val));
+    }
+
+    const performance = choicesInstances['performance-filter']?.getValue(true);
+    if (performance && performance.length > 0) {
+        performance.forEach(val => params.append('performance_impact', val));
+    }
 
     const sortBy = document.getElementById('sort-by').value;
     params.append('sort_by', sortBy);
@@ -265,6 +542,13 @@ function createRuleCard(rule) {
         sourceBadge.className = 'badge badge-source';
         sourceBadge.textContent = rule.source.toUpperCase();
         badges.appendChild(sourceBadge);
+    }
+
+    if (rule.category) {
+        const categoryBadge = document.createElement('span');
+        categoryBadge.className = 'badge badge-category';
+        categoryBadge.textContent = rule.category;
+        badges.appendChild(categoryBadge);
     }
 
     header.appendChild(badges);
@@ -401,8 +685,8 @@ function showRuleDetail(rule) {
         html += `
             <div class="detail-section">
                 <h3>References</h3>
-                <ul>
-                    ${rule.reference.map(ref => `<li>${ref}</li>`).join('')}
+                <ul class="reference-list">
+                    ${rule.reference.map(ref => `<li>${formatReference(ref)}</li>`).join('')}
                 </ul>
             </div>
         `;
@@ -424,13 +708,93 @@ function showRuleDetail(rule) {
 
     html += `
         <div class="detail-section">
+            <h3>Formatted Rule</h3>
+            <div class="rule-raw">${formatRawRule(rule.raw_rule)}</div>
+        </div>
+
+        <div class="detail-section">
             <h3>Raw Rule</h3>
-            <div class="rule-raw">${escapeHtml(rule.raw_rule)}</div>
+            <div class="rule-raw-original">${escapeHtml(rule.raw_rule)}</div>
         </div>
     `;
 
     detailDiv.innerHTML = html;
     modal.style.display = 'block';
+}
+
+// Format raw rule with proper indentation and line breaks
+function formatRawRule(rawRule) {
+    // First, normalize the raw rule by collapsing whitespace
+    let normalized = rawRule.replace(/\s+/g, ' ').trim();
+
+    // Find the opening parenthesis that starts the options
+    const openParenIndex = normalized.indexOf('(');
+    if (openParenIndex === -1) {
+        return escapeHtml(normalized); // No options found
+    }
+
+    // Split header and options
+    const header = normalized.substring(0, openParenIndex).trim();
+    const optionsWithParens = normalized.substring(openParenIndex);
+
+    // Remove outer parentheses
+    const optionsContent = optionsWithParens.substring(1, optionsWithParens.length - 1);
+
+    // Split by semicolons, but respect quoted strings
+    let options = [];
+    let current = '';
+    let inQuotes = false;
+    let escapeNext = false;
+
+    for (let i = 0; i < optionsContent.length; i++) {
+        const char = optionsContent[i];
+
+        if (escapeNext) {
+            current += char;
+            escapeNext = false;
+            continue;
+        }
+
+        if (char === '\\') {
+            current += char;
+            escapeNext = true;
+            continue;
+        }
+
+        if (char === '"') {
+            inQuotes = !inQuotes;
+            current += char;
+        } else if (char === ';' && !inQuotes) {
+            const trimmed = current.trim();
+            if (trimmed) {
+                options.push(trimmed);
+            }
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+
+    // Add the last option if any
+    const trimmed = current.trim();
+    if (trimmed) {
+        options.push(trimmed);
+    }
+
+    // Build formatted output (escape HTML for each part)
+    let result = `<span class="rule-header-line">${escapeHtml(header)}</span> (\n`;
+
+    options.forEach((opt, index) => {
+        const isLast = index === options.length - 1;
+        result += `    <span class="rule-option">${escapeHtml(opt)};</span>`;
+        if (!isLast) {
+            result += '\n';
+        }
+    });
+
+    result += '\n)';
+
+    return result;
 }
 
 // Update pagination controls
@@ -487,4 +851,59 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Format reference to clickable link
+function formatReference(ref) {
+    // Parse reference format: "type,value"
+    // Common types: url, cve, bugtraq, nessus, mcafee, etc.
+    const parts = ref.split(',', 2);
+
+    if (parts.length !== 2) {
+        return escapeHtml(ref);
+    }
+
+    const type = parts[0].toLowerCase().trim();
+    const value = parts[1].trim();
+
+    let url = '';
+    let displayText = '';
+
+    switch (type) {
+        case 'url':
+            // URL reference - add https:// if not present
+            if (value.startsWith('http://') || value.startsWith('https://')) {
+                url = value;
+            } else {
+                url = `https://${value}`;
+            }
+            displayText = value;
+            break;
+
+        case 'cve':
+            url = `https://cve.mitre.org/cgi-bin/cvename.cgi?name=${value}`;
+            displayText = value;
+            break;
+
+        case 'bugtraq':
+            url = `https://www.securityfocus.com/bid/${value}`;
+            displayText = `BugTraq ${value}`;
+            break;
+
+        case 'nessus':
+            url = `https://www.tenable.com/plugins/nessus/${value}`;
+            displayText = `Nessus ${value}`;
+            break;
+
+        case 'mcafee':
+            url = `https://www.mcafee.com/threat-intelligence/malware/default.aspx?id=${value}`;
+            displayText = `McAfee ${value}`;
+            break;
+
+        default:
+            // Unknown type, display as-is
+            return escapeHtml(ref);
+    }
+
+    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="reference-link">${escapeHtml(displayText)}</a>`;
 }

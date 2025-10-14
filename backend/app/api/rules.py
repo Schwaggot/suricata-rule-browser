@@ -94,13 +94,19 @@ async def get_rules(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=1000, description="Number of rules per page"),
     search: Optional[str] = Query(None, description="Search in message, SID, and content"),
-    action: Optional[RuleAction] = Query(None, description="Filter by action"),
-    protocol: Optional[str] = Query(None, description="Filter by protocol"),
-    classtype: Optional[str] = Query(None, description="Filter by classification type"),
-    priority: Optional[int] = Query(None, description="Filter by priority"),
+    action: Optional[List[str]] = Query(None, description="Filter by action (can specify multiple)"),
+    protocol: Optional[List[str]] = Query(None, description="Filter by protocol (can specify multiple)"),
+    classtype: Optional[List[str]] = Query(None, description="Filter by classification type (can specify multiple)"),
+    priority: Optional[List[int]] = Query(None, description="Filter by priority (can specify multiple)"),
     sid: Optional[int] = Query(None, description="Filter by specific SID"),
-    source: Optional[str] = Query(None, description="Filter by rule source"),
-    category: Optional[str] = Query(None, description="Filter by rule category"),
+    source: Optional[List[str]] = Query(None, description="Filter by rule source (can specify multiple)"),
+    category: Optional[List[str]] = Query(None, description="Filter by rule category (can specify multiple)"),
+    signature_severity: Optional[List[str]] = Query(None, description="Filter by signature severity (can specify multiple)"),
+    attack_target: Optional[List[str]] = Query(None, description="Filter by attack target (can specify multiple)"),
+    deployment: Optional[List[str]] = Query(None, description="Filter by deployment type (can specify multiple)"),
+    affected_product: Optional[List[str]] = Query(None, description="Filter by affected product (can specify multiple)"),
+    confidence: Optional[List[str]] = Query(None, description="Filter by confidence level (can specify multiple)"),
+    performance_impact: Optional[List[str]] = Query(None, description="Filter by performance impact (can specify multiple)"),
     sort_by: Optional[str] = Query("sid", description="Sort by field (sid, priority, msg)"),
     sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)")
 ):
@@ -138,28 +144,49 @@ async def get_rules(
         ]
 
     if action:
-        filtered_rules = [rule for rule in filtered_rules if rule.action == action]
+        filtered_rules = [rule for rule in filtered_rules if rule.action.value in action]
 
     if protocol:
-        filtered_rules = [rule for rule in filtered_rules if rule.protocol == protocol.lower()]
+        protocol_lower = [p.lower() for p in protocol]
+        filtered_rules = [rule for rule in filtered_rules if rule.protocol in protocol_lower]
 
     if classtype:
+        classtype_lower = [c.lower() for c in classtype]
         filtered_rules = [
             rule for rule in filtered_rules
-            if rule.classtype and rule.classtype.lower() == classtype.lower()
+            if rule.classtype and rule.classtype.lower() in classtype_lower
         ]
 
     if priority is not None:
-        filtered_rules = [rule for rule in filtered_rules if rule.priority == priority]
+        filtered_rules = [rule for rule in filtered_rules if rule.priority in priority]
 
     if sid is not None:
         filtered_rules = [rule for rule in filtered_rules if rule.id == sid]
 
     if source:
-        filtered_rules = [rule for rule in filtered_rules if rule.source == source]
+        filtered_rules = [rule for rule in filtered_rules if rule.source in source]
 
     if category:
-        filtered_rules = [rule for rule in filtered_rules if rule.category == category.upper()]
+        category_upper = [c.upper() for c in category]
+        filtered_rules = [rule for rule in filtered_rules if rule.category in category_upper]
+
+    if signature_severity:
+        filtered_rules = [rule for rule in filtered_rules if rule.signature_severity in signature_severity]
+
+    if attack_target:
+        filtered_rules = [rule for rule in filtered_rules if rule.attack_target in attack_target]
+
+    if deployment:
+        filtered_rules = [rule for rule in filtered_rules if rule.deployment in deployment]
+
+    if affected_product:
+        filtered_rules = [rule for rule in filtered_rules if rule.affected_product in affected_product]
+
+    if confidence:
+        filtered_rules = [rule for rule in filtered_rules if rule.confidence in confidence]
+
+    if performance_impact:
+        filtered_rules = [rule for rule in filtered_rules if rule.performance_impact in performance_impact]
 
     # Sort rules
     reverse = sort_order.lower() == "desc"
@@ -213,6 +240,12 @@ async def get_stats():
     priorities = {}
     sources = {}
     categories = {}
+    signature_severities = {}
+    attack_targets = {}
+    deployments = {}
+    affected_products = {}
+    confidences = {}
+    performance_impacts = {}
 
     for rule in _rules_cache:
         # Count actions
@@ -237,6 +270,25 @@ async def get_stats():
         if rule.category:
             categories[rule.category] = categories.get(rule.category, 0) + 1
 
+        # Count metadata-based filters
+        if rule.signature_severity:
+            signature_severities[rule.signature_severity] = signature_severities.get(rule.signature_severity, 0) + 1
+
+        if rule.attack_target:
+            attack_targets[rule.attack_target] = attack_targets.get(rule.attack_target, 0) + 1
+
+        if rule.deployment:
+            deployments[rule.deployment] = deployments.get(rule.deployment, 0) + 1
+
+        if rule.affected_product:
+            affected_products[rule.affected_product] = affected_products.get(rule.affected_product, 0) + 1
+
+        if rule.confidence:
+            confidences[rule.confidence] = confidences.get(rule.confidence, 0) + 1
+
+        if rule.performance_impact:
+            performance_impacts[rule.performance_impact] = performance_impacts.get(rule.performance_impact, 0) + 1
+
     return {
         "total_rules": total_rules,
         "actions": actions,
@@ -244,7 +296,13 @@ async def get_stats():
         "classtypes": classtypes,
         "priorities": priorities,
         "sources": sources,
-        "categories": categories
+        "categories": categories,
+        "signature_severities": signature_severities,
+        "attack_targets": attack_targets,
+        "deployments": deployments,
+        "affected_products": affected_products,
+        "confidences": confidences,
+        "performance_impacts": performance_impacts
     }
 
 

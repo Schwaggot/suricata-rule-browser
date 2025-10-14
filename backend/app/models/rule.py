@@ -61,6 +61,16 @@ class SuricataRule(BaseModel):
     # Category tracking (extracted from message prefix like "ET MALWARE", "ET INFO")
     category: Optional[str] = Field(None, description="Rule category (e.g., 'MALWARE', 'INFO', 'EXPLOIT')")
 
+    # Metadata-based fields for additional filtering
+    signature_severity: Optional[str] = Field(None, description="Signature severity from metadata (Critical, Major, Minor, Informational)")
+    attack_target: Optional[str] = Field(None, description="Attack target from metadata (e.g., Client_Endpoint, Server, Web_Server)")
+    deployment: Optional[str] = Field(None, description="Deployment type from metadata (e.g., Perimeter, Internal, Datacenter)")
+    affected_product: Optional[str] = Field(None, description="Affected product from metadata")
+    confidence: Optional[str] = Field(None, description="Detection confidence from metadata (High, Medium, Low)")
+    performance_impact: Optional[str] = Field(None, description="Performance impact from metadata (Low, Medium, High)")
+    created_at: Optional[str] = Field(None, description="Creation date from metadata")
+    updated_at: Optional[str] = Field(None, description="Last update date from metadata")
+
     class Config:
         json_schema_extra = {
             "example": {

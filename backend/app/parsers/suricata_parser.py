@@ -94,7 +94,12 @@ class SuricataRuleParser:
 
             # Parse header to extract network information
             # Header format: "protocol src_ip src_port direction dst_ip dst_port"
-            header_parts = parsed.header.split()
+            # The suricataparser might return header as string or list
+            if isinstance(parsed.header, list):
+                header_parts = parsed.header
+            else:
+                header_parts = parsed.header.split()
+
             if len(header_parts) < 6:
                 print(f"Invalid header format: {parsed.header}")
                 return None
@@ -154,7 +159,14 @@ class SuricataRuleParser:
             # Parse metadata
             metadata = {}
             if 'metadata' in options:
-                metadata = cls.parse_metadata(options['metadata'])
+                metadata_value = options['metadata']
+                # Handle case where metadata appears multiple times (list)
+                if isinstance(metadata_value, list):
+                    # Combine all metadata entries
+                    for meta_item in metadata_value:
+                        metadata.update(cls.parse_metadata(meta_item))
+                else:
+                    metadata = cls.parse_metadata(metadata_value)
 
             # Extract tags from message for easier searching
             tags = []
@@ -163,6 +175,16 @@ class SuricataRuleParser:
 
             # Extract category from message
             category = cls.extract_category(msg)
+
+            # Extract metadata fields for filtering
+            signature_severity = metadata.get('signature_severity')
+            attack_target = metadata.get('attack_target')
+            deployment = metadata.get('deployment')
+            affected_product = metadata.get('affected_product')
+            confidence = metadata.get('confidence')
+            performance_impact = metadata.get('performance_impact')
+            created_at = metadata.get('created_at')
+            updated_at = metadata.get('updated_at')
 
             return SuricataRule(
                 id=sid,
@@ -184,7 +206,15 @@ class SuricataRuleParser:
                 tags=tags,
                 source=source,
                 source_file=source_file,
-                category=category
+                category=category,
+                signature_severity=signature_severity,
+                attack_target=attack_target,
+                deployment=deployment,
+                affected_product=affected_product,
+                confidence=confidence,
+                performance_impact=performance_impact,
+                created_at=created_at,
+                updated_at=updated_at
             )
 
         except Exception as e:
