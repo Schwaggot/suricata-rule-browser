@@ -30,7 +30,7 @@ class SuricataRuleParser:
 
         # Match patterns like "ET CATEGORY", "ETPRO CATEGORY", or just "CATEGORY"
         import re
-        match = re.match(r'^(?:ET(?:PRO)?\s+)?([A-Z][A-Z_\s]+?)(?:\s|:)', msg, re.IGNORECASE)
+        match = re.match(r'^(?:ET(?:PRO)?\s+)?([A-Z][A-Z0-9._\s]+?)(?:\s|:)', msg, re.IGNORECASE)
         if match:
             category = match.group(1).strip().upper()
             # Replace spaces with underscores and return
