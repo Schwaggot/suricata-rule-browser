@@ -7,6 +7,7 @@ import json
 import shutil
 import tarfile
 import zipfile
+import ssl
 import yaml
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -203,7 +204,7 @@ class SuricataRuleDownloader:
             request = Request(url, headers=headers)
 
             # Download with progress indication
-            with urlopen(request, timeout=60) as response:
+            with urlopen(request, context=ssl._create_unverified_context(), timeout=60) as response:
                 total_size = int(response.headers.get("Content-Length", 0))
 
                 with open(destination, "wb") as f:
