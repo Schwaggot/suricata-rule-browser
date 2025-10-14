@@ -1,6 +1,7 @@
 """
 Suricata Rule Browser - FastAPI Backend
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -8,11 +9,21 @@ from pathlib import Path
 
 from app.api import rules
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown"""
+    # Startup: Load rules
+    rules.load_rules()
+    yield
+    # Shutdown: Add cleanup code here if needed
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Suricata Rule Browser",
     description="Browse and search Suricata IDS rules",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Set up templates and static files

@@ -83,12 +83,6 @@ def load_rules():
     print("="*60 + "\n")
 
 
-@router.on_event("startup")
-async def startup_event():
-    """Load rules when the API starts"""
-    load_rules()
-
-
 @router.get("/rules", response_model=RuleResponse)
 async def get_rules(
     page: int = Query(1, ge=1, description="Page number"),
