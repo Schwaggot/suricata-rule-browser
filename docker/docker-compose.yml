@@ -1,0 +1,29 @@
+services:
+  suricata-rule-browser:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: suricata-rule-browser
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the data directory for persistent rule storage
+      - ../data:/app/data
+      # Mount the rules configuration file
+      - ../rules.yaml:/app/rules.yaml:ro
+      # Optional: Mount custom rules directory
+      # - ./custom-rules:/app/custom-rules:ro
+    environment:
+      # Optional: Set timezone
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  default:
+    name: suricata-rule-browser-network
