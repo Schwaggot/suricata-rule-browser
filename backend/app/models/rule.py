@@ -14,18 +14,6 @@ class RuleAction(str, Enum):
     PASS = "pass"
 
 
-class Protocol(str, Enum):
-    """Network protocols"""
-    TCP = "tcp"
-    UDP = "udp"
-    ICMP = "icmp"
-    IP = "ip"
-    HTTP = "http"
-    TLS = "tls"
-    DNS = "dns"
-    SMB = "smb"
-
-
 class SuricataRule(BaseModel):
     """Model representing a parsed Suricata rule"""
     id: Optional[int] = Field(None, description="Rule SID (Signature ID)")
