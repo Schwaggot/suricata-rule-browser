@@ -34,6 +34,15 @@ sources:
     cache_hours: 24
     enabled: true
 
+  # Abuse.ch Threatfox IOC
+  - name: threatfox-ioc
+    type: url
+    description: Threatfox IOC Ruleset
+    url: https://threatfox.abuse.ch/downloads/threatfox_suricata.tar.gz
+    file_type: tar.gz
+    cache_hours: 24
+    enabled: true
+
   # Example: Local directory source
   # - name: custom-local
   #   type: directory
@@ -58,7 +67,7 @@ sources:
   #   enabled: true
 
   # Built-in example rules (disabled by default)
-  - name: local
+  - name: examples
     type: directory
     description: Local example and custom rules
     path: data/rules
