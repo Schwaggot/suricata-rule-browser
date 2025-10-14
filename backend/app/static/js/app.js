@@ -8,9 +8,36 @@ let totalRules = 0;
 // Store Choices.js instances for all filter dropdowns
 let choicesInstances = {};
 
+// Column order (must match the order in createRuleRow)
+const columnOrder = [
+    'sid', 'action', 'protocol', 'message', 'source', 'category', 'classtype',
+    'severity', 'attack_target', 'deployment', 'affected_product',
+    'confidence', 'performance', 'network', 'revision'
+];
+
+// Column visibility state
+let visibleColumns = {
+    sid: false,
+    action: false,
+    protocol: true,
+    message: true,
+    source: true,
+    category: true,
+    classtype: true,
+    severity: false,
+    attack_target: false,
+    deployment: false,
+    affected_product: false,
+    confidence: false,
+    performance: false,
+    network: true,
+    revision: false
+};
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
+    initializeColumnVisibility();
     initializeChoices();
     initializeEventListeners();
     loadStats();
@@ -47,6 +74,58 @@ function updateThemeIcon(theme) {
     if (icon) {
         icon.textContent = theme === 'dark' ? '☀️' : '🌙';
     }
+}
+
+// Initialize column visibility from localStorage
+function initializeColumnVisibility() {
+    const saved = localStorage.getItem('columnVisibility');
+    if (saved) {
+        visibleColumns = JSON.parse(saved);
+    }
+
+    // Update checkboxes to match saved state
+    Object.keys(visibleColumns).forEach(column => {
+        const checkbox = document.querySelector(`input[data-column="${column}"]`);
+        if (checkbox) {
+            checkbox.checked = visibleColumns[column];
+        }
+    });
+
+    // Apply initial visibility
+    applyColumnVisibility();
+}
+
+// Toggle column visibility
+function toggleColumn(columnName, isVisible) {
+    visibleColumns[columnName] = isVisible;
+    localStorage.setItem('columnVisibility', JSON.stringify(visibleColumns));
+    applyColumnVisibility();
+}
+
+// Apply column visibility to table
+function applyColumnVisibility() {
+    const table = document.getElementById('rules-table');
+
+    // Update header visibility
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach(th => {
+        const column = th.getAttribute('data-column');
+        if (column) {
+            th.style.display = visibleColumns[column] ? '' : 'none';
+        }
+    });
+
+    // Update cell visibility for all rows
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        // Use columnOrder array to ensure cells match the correct columns
+        columnOrder.forEach((column, index) => {
+            if (cells[index]) {
+                cells[index].style.display = visibleColumns[column] ? '' : 'none';
+            }
+        });
+    });
 }
 
 // Initialize Choices.js for all filter dropdowns
@@ -115,6 +194,32 @@ function initializeEventListeners() {
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
+    // Column visibility toggle
+    const columnToggleBtn = document.getElementById('column-toggle-btn');
+    const columnDropdown = document.getElementById('column-dropdown');
+
+    columnToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = columnDropdown.style.display === 'block';
+        columnDropdown.style.display = isVisible ? 'none' : 'block';
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.column-toggle-wrapper')) {
+            columnDropdown.style.display = 'none';
+        }
+    });
+
+    // Column checkboxes
+    const columnCheckboxes = document.querySelectorAll('.column-option input[type="checkbox"]');
+    columnCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const column = e.target.getAttribute('data-column');
+            toggleColumn(column, e.target.checked);
+        });
+    });
+
     // Search
     document.getElementById('search-btn').addEventListener('click', handleSearch);
     document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -137,9 +242,13 @@ function initializeEventListeners() {
     document.getElementById('sort-by').addEventListener('change', handleFilterChange);
     document.getElementById('sort-order').addEventListener('change', handleFilterChange);
 
-    // Pagination
-    document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
-    document.getElementById('next-page').addEventListener('click', () => changePage(1));
+    // Pagination - Top
+    document.getElementById('prev-page-top').addEventListener('click', () => changePage(-1));
+    document.getElementById('next-page-top').addEventListener('click', () => changePage(1));
+
+    // Pagination - Bottom
+    document.getElementById('prev-page-bottom').addEventListener('click', () => changePage(-1));
+    document.getElementById('next-page-bottom').addEventListener('click', () => changePage(1));
 
     // Modal
     const modal = document.getElementById('rule-modal');
@@ -531,85 +640,130 @@ function displayRules(data) {
     rulesList.innerHTML = '';
 
     if (data.rules.length === 0) {
-        rulesList.innerHTML = '<div class="rule-card"><p>No rules found matching your criteria.</p></div>';
+        rulesList.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 40px;">No rules found matching your criteria.</td></tr>';
         return;
     }
 
     data.rules.forEach(rule => {
-        const ruleCard = createRuleCard(rule);
-        rulesList.appendChild(ruleCard);
+        const ruleRow = createRuleRow(rule);
+        rulesList.appendChild(ruleRow);
     });
+
+    // Apply column visibility to newly rendered rows
+    applyColumnVisibility();
 }
 
-// Create a rule card element
-function createRuleCard(rule) {
-    const card = document.createElement('div');
-    card.className = 'rule-card';
-    card.addEventListener('click', () => showRuleDetail(rule));
+// Create a rule row element
+function createRuleRow(rule) {
+    const row = document.createElement('tr');
+    row.className = 'rule-row';
+    row.addEventListener('click', () => showRuleDetail(rule));
 
-    // Title: Rule message
-    const title = document.createElement('div');
-    title.className = 'rule-title';
-    title.textContent = rule.msg || 'No message';
+    // Helper function to create a cell with optional badge
+    const createCell = (content, className = '', isBadge = false, badgeClass = '') => {
+        const cell = document.createElement('td');
+        if (className) cell.className = className;
 
-    // Header: Badges and SID
-    const header = document.createElement('div');
-    header.className = 'rule-header';
+        if (isBadge && content && content !== '-') {
+            const badge = document.createElement('span');
+            badge.className = `badge ${badgeClass}`;
+            badge.textContent = content;
+            cell.appendChild(badge);
+        } else {
+            cell.textContent = content || '-';
+        }
+        return cell;
+    };
 
-    const badges = document.createElement('div');
-    badges.className = 'rule-badges';
+    // SID column
+    const sidCell = document.createElement('td');
+    sidCell.className = 'sid-cell';
+    sidCell.textContent = rule.id || 'N/A';
+    row.appendChild(sidCell);
 
-    // Add SID as a badge
-    const sidBadge = document.createElement('span');
-    sidBadge.className = 'badge badge-sid';
-    sidBadge.textContent = `SID: ${rule.id || 'N/A'}`;
-    badges.appendChild(sidBadge);
-
+    // Action column
+    const actionCell = document.createElement('td');
     const actionBadge = document.createElement('span');
     actionBadge.className = `badge badge-action ${rule.action}`;
     actionBadge.textContent = rule.action.toUpperCase();
-    badges.appendChild(actionBadge);
+    actionCell.appendChild(actionBadge);
+    row.appendChild(actionCell);
 
+    // Protocol column
+    const protocolCell = document.createElement('td');
     const protocolBadge = document.createElement('span');
     protocolBadge.className = 'badge badge-protocol';
     protocolBadge.textContent = rule.protocol.toUpperCase();
-    badges.appendChild(protocolBadge);
+    protocolCell.appendChild(protocolBadge);
+    row.appendChild(protocolCell);
 
+    // Message column
+    const msgCell = document.createElement('td');
+    msgCell.className = 'msg-cell';
+    msgCell.textContent = rule.msg || 'No message';
+    row.appendChild(msgCell);
+
+    // Source column
+    const sourceCell = document.createElement('td');
     if (rule.source) {
         const sourceBadge = document.createElement('span');
         sourceBadge.className = 'badge badge-source';
         sourceBadge.textContent = rule.source.toUpperCase();
-        badges.appendChild(sourceBadge);
+        sourceCell.appendChild(sourceBadge);
+    } else {
+        sourceCell.textContent = '-';
     }
+    row.appendChild(sourceCell);
 
+    // Category column
+    const categoryCell = document.createElement('td');
     if (rule.category) {
         const categoryBadge = document.createElement('span');
         categoryBadge.className = 'badge badge-category';
         categoryBadge.textContent = rule.category;
-        badges.appendChild(categoryBadge);
+        categoryCell.appendChild(categoryBadge);
+    } else {
+        categoryCell.textContent = '-';
     }
+    row.appendChild(categoryCell);
 
-    header.appendChild(badges);
+    // Class Type column
+    row.appendChild(createCell(rule.classtype));
 
-    const meta = document.createElement('div');
-    meta.className = 'rule-meta';
+    // Severity column
+    row.appendChild(createCell(rule.signature_severity, '', true, 'badge-severity'));
 
-    // Create network info with truncation
+    // Attack Target column
+    row.appendChild(createCell(rule.attack_target));
+
+    // Deployment column
+    row.appendChild(createCell(rule.deployment));
+
+    // Affected Product column
+    const productCell = document.createElement('td');
+    productCell.className = 'product-cell';
+    productCell.textContent = rule.affected_product || '-';
+    productCell.title = rule.affected_product || '';
+    row.appendChild(productCell);
+
+    // Confidence column
+    row.appendChild(createCell(rule.confidence, '', true, 'badge-confidence'));
+
+    // Performance Impact column
+    row.appendChild(createCell(rule.performance_impact, '', true, 'badge-performance'));
+
+    // Network column
+    const networkCell = document.createElement('td');
+    networkCell.className = 'network-cell';
     const networkText = `${rule.src_ip}:${rule.src_port} ${rule.direction} ${rule.dst_ip}:${rule.dst_port}`;
-    const networkContainer = createTruncatedText(networkText, 80);
-    meta.appendChild(networkContainer);
+    networkCell.textContent = networkText;
+    networkCell.title = networkText;
+    row.appendChild(networkCell);
 
-    if (rule.classtype) {
-        const classtype = document.createElement('span');
-        classtype.textContent = `Class: ${rule.classtype}`;
-        meta.appendChild(classtype);
-    }
+    // Revision column
+    row.appendChild(createCell(rule.rev));
 
-    card.appendChild(title);
-    card.appendChild(header);
-    card.appendChild(meta);
-
-    return card;
+    return row;
 }
 
 // Create truncated text with expand button
@@ -834,16 +988,26 @@ function formatRawRule(rawRule) {
 
 // Update pagination controls
 function updatePagination(data) {
-    const pageInfo = document.getElementById('page-info');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-
     const totalPages = Math.ceil(data.total / data.page_size);
+    const pageText = `Page ${data.page} of ${totalPages} (${data.total} rules)`;
 
-    pageInfo.textContent = `Page ${data.page} of ${totalPages} (${data.total} rules)`;
+    // Update top pagination
+    const pageInfoTop = document.getElementById('page-info-top');
+    const prevBtnTop = document.getElementById('prev-page-top');
+    const nextBtnTop = document.getElementById('next-page-top');
 
-    prevBtn.disabled = data.page <= 1;
-    nextBtn.disabled = data.page >= totalPages;
+    pageInfoTop.textContent = pageText;
+    prevBtnTop.disabled = data.page <= 1;
+    nextBtnTop.disabled = data.page >= totalPages;
+
+    // Update bottom pagination
+    const pageInfoBottom = document.getElementById('page-info-bottom');
+    const prevBtnBottom = document.getElementById('prev-page-bottom');
+    const nextBtnBottom = document.getElementById('next-page-bottom');
+
+    pageInfoBottom.textContent = pageText;
+    prevBtnBottom.disabled = data.page <= 1;
+    nextBtnBottom.disabled = data.page >= totalPages;
 }
 
 // Change page
@@ -855,13 +1019,13 @@ function changePage(delta) {
 // Show loading indicator
 function showLoading() {
     document.getElementById('loading').style.display = 'block';
-    document.getElementById('rules-list').style.display = 'none';
+    document.querySelector('.table-wrapper').style.display = 'none';
 }
 
 // Hide loading indicator
 function hideLoading() {
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('rules-list').style.display = 'flex';
+    document.querySelector('.table-wrapper').style.display = 'block';
 }
 
 // Show error message

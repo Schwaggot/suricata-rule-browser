@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suricata Rule Browser</title>
-    <link rel="stylesheet" href="/static/css/choices.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/choices.min.css?v=5">
+    <link rel="stylesheet" href="/static/css/style.css?v=5">
 </head>
 <body>
     <div class="container">
@@ -137,13 +137,116 @@
 
             <div id="error-message" class="error-message" style="display: none;"></div>
 
-            <div id="rules-list" class="rules-list"></div>
+            <!-- Top Pagination and Controls -->
+            <div class="table-controls">
+                <div class="pagination pagination-top" id="pagination-top">
+                    <button id="prev-page-top" class="btn-pagination">‹</button>
+                    <span id="page-info-top" class="page-info">Page 1</span>
+                    <button id="next-page-top" class="btn-pagination">›</button>
+                </div>
+
+                <div class="column-toggle-wrapper">
+                    <button id="column-toggle-btn" class="btn-column-toggle" title="Configure columns">
+                        ⚙
+                    </button>
+                    <div id="column-dropdown" class="column-dropdown" style="display: none;">
+                        <div class="column-dropdown-header">Show/Hide Columns</div>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="sid">
+                            <span>SID</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="action">
+                            <span>Action</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="protocol" checked>
+                            <span>Protocol</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="message" checked>
+                            <span>Message</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="source" checked>
+                            <span>Source</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="category" checked>
+                            <span>Category</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="classtype" checked>
+                            <span>Class Type</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="severity">
+                            <span>Severity</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="attack_target">
+                            <span>Attack Target</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="deployment">
+                            <span>Deployment</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="affected_product">
+                            <span>Affected Product</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="confidence">
+                            <span>Confidence</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="performance">
+                            <span>Performance Impact</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="network" checked>
+                            <span>Network</span>
+                        </label>
+                        <label class="column-option">
+                            <input type="checkbox" data-column="revision">
+                            <span>Revision</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="rules-table" class="rules-table">
+                    <thead>
+                        <tr>
+                            <th data-column="sid">SID</th>
+                            <th data-column="action">Action</th>
+                            <th data-column="protocol">Protocol</th>
+                            <th data-column="message">Message</th>
+                            <th data-column="source">Source</th>
+                            <th data-column="category">Category</th>
+                            <th data-column="classtype">Class Type</th>
+                            <th data-column="severity" style="display: none;">Severity</th>
+                            <th data-column="attack_target" style="display: none;">Attack Target</th>
+                            <th data-column="deployment" style="display: none;">Deployment</th>
+                            <th data-column="affected_product" style="display: none;">Affected Product</th>
+                            <th data-column="confidence" style="display: none;">Confidence</th>
+                            <th data-column="performance" style="display: none;">Performance Impact</th>
+                            <th data-column="network">Network</th>
+                            <th data-column="revision" style="display: none;">Revision</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rules-list">
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="pagination" id="pagination">
-            <button id="prev-page" class="btn btn-secondary">Previous</button>
-            <span id="page-info">Page 1</span>
-            <button id="next-page" class="btn btn-secondary">Next</button>
+        <!-- Bottom Pagination -->
+        <div class="pagination pagination-bottom" id="pagination-bottom">
+            <button id="prev-page-bottom" class="btn-pagination">‹</button>
+            <span id="page-info-bottom" class="page-info">Page 1</span>
+            <button id="next-page-bottom" class="btn-pagination">›</button>
         </div>
     </div>
 
@@ -155,7 +258,7 @@
         </div>
     </div>
 
-    <script src="/static/js/choices.min.js"></script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/choices.min.js?v=6"></script>
+    <script src="/static/js/app.js?v=6"></script>
 </body>
 </html>
