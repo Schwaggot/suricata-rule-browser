@@ -213,10 +213,30 @@ async def get_rules(
     # Sort rules
     reverse = sort_order.lower() == "desc"
 
-    if sort_by == "sid":
-        filtered_rules.sort(key=lambda r: r.id if r.id is not None else 0, reverse=reverse)
-    elif sort_by == "msg":
-        filtered_rules.sort(key=lambda r: r.msg if r.msg else "", reverse=reverse)
+    # Define sort keys for different fields
+    sort_keys = {
+        "sid": lambda r: r.id if r.id is not None else 0,
+        "msg": lambda r: (r.msg or "").lower(),
+        "action": lambda r: r.action.value,
+        "protocol": lambda r: r.protocol.lower(),
+        "source": lambda r: (r.source or "").lower(),
+        "category": lambda r: (r.category or "").lower(),
+        "classtype": lambda r: (r.classtype or "").lower(),
+        "severity": lambda r: (r.signature_severity or "").lower(),
+        "attack_target": lambda r: (r.attack_target or "").lower(),
+        "deployment": lambda r: (r.deployment or "").lower(),
+        "affected_product": lambda r: (r.affected_product or "").lower(),
+        "confidence": lambda r: (r.confidence or "").lower(),
+        "performance": lambda r: (r.performance_impact or "").lower(),
+        "rev": lambda r: r.rev if r.rev is not None else 0,
+    }
+
+    # Apply sorting if the field is valid
+    if sort_by in sort_keys:
+        filtered_rules.sort(key=sort_keys[sort_by], reverse=reverse)
+    else:
+        # Default to sorting by message
+        filtered_rules.sort(key=sort_keys["msg"], reverse=reverse)
 
     # Calculate pagination
     total = len(filtered_rules)

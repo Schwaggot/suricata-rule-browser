@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suricata Rule Browser</title>
-    <link rel="stylesheet" href="/static/css/choices.min.css?v=5">
-    <link rel="stylesheet" href="/static/css/style.css?v=5">
+    <link rel="stylesheet" href="/static/css/choices.min.css?v=12">
+    <link rel="stylesheet" href="/static/css/style.css?v=12">
 </head>
 <body>
     <div class="container">
@@ -58,12 +58,6 @@
                 </div>
 
                 <div class="filter-group">
-                    <label for="classtype-filter">Class Type:</label>
-                    <select id="classtype-filter" multiple>
-                    </select>
-                </div>
-
-                <div class="filter-group">
                     <label for="source-filter">Source:</label>
                     <select id="source-filter" multiple>
                     </select>
@@ -72,6 +66,12 @@
                 <div class="filter-group">
                     <label for="category-filter">Category:</label>
                     <select id="category-filter" multiple>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="classtype-filter">Class Type:</label>
+                    <select id="classtype-filter" multiple>
                     </select>
                 </div>
 
@@ -94,7 +94,7 @@
                 </div>
 
                 <div class="filter-group">
-                    <label for="affected-product-filter">Product:</label>
+                    <label for="affected-product-filter">Affected Product:</label>
                     <select id="affected-product-filter" multiple>
                     </select>
                 </div>
@@ -106,24 +106,8 @@
                 </div>
 
                 <div class="filter-group">
-                    <label for="performance-filter">Performance:</label>
+                    <label for="performance-filter">Performance Impact:</label>
                     <select id="performance-filter" multiple>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="sort-by">Sort By:</label>
-                    <select id="sort-by">
-                        <option value="sid">SID</option>
-                        <option value="msg" selected>Message</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="sort-order">Order:</label>
-                    <select id="sort-order">
-                        <option value="asc">Ascending</option>
-                        <option value="desc">Descending</option>
                     </select>
                 </div>
             </div>
@@ -219,21 +203,21 @@
                 <table id="rules-table" class="rules-table">
                     <thead>
                         <tr>
-                            <th data-column="sid">SID</th>
-                            <th data-column="action">Action</th>
-                            <th data-column="protocol">Protocol</th>
-                            <th data-column="message">Message</th>
-                            <th data-column="source">Source</th>
-                            <th data-column="category">Category</th>
-                            <th data-column="classtype">Class Type</th>
-                            <th data-column="severity" style="display: none;">Severity</th>
-                            <th data-column="attack_target" style="display: none;">Attack Target</th>
-                            <th data-column="deployment" style="display: none;">Deployment</th>
-                            <th data-column="affected_product" style="display: none;">Affected Product</th>
-                            <th data-column="confidence" style="display: none;">Confidence</th>
-                            <th data-column="performance" style="display: none;">Performance Impact</th>
+                            <th data-column="sid" data-sort="sid" class="sortable">SID <span class="sort-indicator"></span></th>
+                            <th data-column="action" data-sort="action" class="sortable">Action <span class="sort-indicator"></span></th>
+                            <th data-column="protocol" data-sort="protocol" class="sortable">Protocol <span class="sort-indicator"></span></th>
+                            <th data-column="message" data-sort="msg" class="sortable">Message <span class="sort-indicator"></span></th>
+                            <th data-column="source" data-sort="source" class="sortable">Source <span class="sort-indicator"></span></th>
+                            <th data-column="category" data-sort="category" class="sortable">Category <span class="sort-indicator"></span></th>
+                            <th data-column="classtype" data-sort="classtype" class="sortable">Class Type <span class="sort-indicator"></span></th>
+                            <th data-column="severity" data-sort="severity" class="sortable" style="display: none;">Severity <span class="sort-indicator"></span></th>
+                            <th data-column="attack_target" data-sort="attack_target" class="sortable" style="display: none;">Attack Target <span class="sort-indicator"></span></th>
+                            <th data-column="deployment" data-sort="deployment" class="sortable" style="display: none;">Deployment <span class="sort-indicator"></span></th>
+                            <th data-column="affected_product" data-sort="affected_product" class="sortable" style="display: none;">Affected Product <span class="sort-indicator"></span></th>
+                            <th data-column="confidence" data-sort="confidence" class="sortable" style="display: none;">Confidence <span class="sort-indicator"></span></th>
+                            <th data-column="performance" data-sort="performance" class="sortable" style="display: none;">Performance Impact <span class="sort-indicator"></span></th>
                             <th data-column="network">Network</th>
-                            <th data-column="revision" style="display: none;">Revision</th>
+                            <th data-column="revision" data-sort="rev" class="sortable" style="display: none;">Revision <span class="sort-indicator"></span></th>
                         </tr>
                     </thead>
                     <tbody id="rules-list">
@@ -258,7 +242,7 @@
         </div>
     </div>
 
-    <script src="/static/js/choices.min.js?v=6"></script>
-    <script src="/static/js/app.js?v=6"></script>
+    <script src="/static/js/choices.min.js?v=15"></script>
+    <script src="/static/js/app.js?v=15"></script>
 </body>
 </html>

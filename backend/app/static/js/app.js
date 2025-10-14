@@ -4,6 +4,7 @@ const API_BASE = '/api/v1';
 let currentPage = 1;
 let currentFilters = {};
 let totalRules = 0;
+let currentSort = { field: 'msg', order: 'asc' };
 
 // Store Choices.js instances for all filter dropdowns
 let choicesInstances = {};
@@ -40,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeColumnVisibility();
     initializeChoices();
     initializeEventListeners();
+    updateSortIndicators(); // Show default sort indicator
     loadStats();
     loadRules();
 });
@@ -133,9 +135,9 @@ function initializeChoices() {
     const filterIds = [
         'action-filter',
         'protocol-filter',
-        'classtype-filter',
         'source-filter',
         'category-filter',
+        'classtype-filter',
         'severity-filter',
         'attack-target-filter',
         'deployment-filter',
@@ -155,9 +157,19 @@ function initializeChoices() {
                 placeholderValue: 'Select options',
                 itemSelectText: '',
                 shouldSort: false,
+                searchResultLimit: 100,  // Show up to 100 search results instead of default 4
                 // Customize the no results text
                 noResultsText: 'No options found',
-                noChoicesText: 'No options available'
+                noChoicesText: 'No options available',
+                // Custom search function to search anywhere in the string (case-insensitive)
+                searchFields: ['label', 'value'],
+                searchFloor: 1,
+                fuseOptions: {
+                    includeScore: true,
+                    threshold: 0.3,  // Lower = more strict, higher = more fuzzy
+                    distance: 1000,   // How far to search in the string
+                    ignoreLocation: true  // Search anywhere in the string
+                }
             });
 
             choicesInstances[id] = choices;
@@ -220,6 +232,15 @@ function initializeEventListeners() {
         });
     });
 
+    // Sortable column headers
+    const sortableHeaders = document.querySelectorAll('th.sortable');
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const sortField = header.getAttribute('data-sort');
+            handleSort(sortField);
+        });
+    });
+
     // Search
     document.getElementById('search-btn').addEventListener('click', handleSearch);
     document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -230,17 +251,15 @@ function initializeEventListeners() {
     // Filters
     document.getElementById('action-filter').addEventListener('change', handleFilterChange);
     document.getElementById('protocol-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);
     document.getElementById('source-filter').addEventListener('change', handleFilterChange);
     document.getElementById('category-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);
     document.getElementById('severity-filter').addEventListener('change', handleFilterChange);
     document.getElementById('attack-target-filter').addEventListener('change', handleFilterChange);
     document.getElementById('deployment-filter').addEventListener('change', handleFilterChange);
     document.getElementById('affected-product-filter').addEventListener('change', handleFilterChange);
     document.getElementById('confidence-filter').addEventListener('change', handleFilterChange);
     document.getElementById('performance-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('sort-by').addEventListener('change', handleFilterChange);
-    document.getElementById('sort-order').addEventListener('change', handleFilterChange);
 
     // Pagination - Top
     document.getElementById('prev-page-top').addEventListener('click', () => changePage(-1));
@@ -516,6 +535,38 @@ function handleFilterChange() {
     loadRules();
 }
 
+// Handle column sort
+function handleSort(field) {
+    // If clicking the same field, toggle order; otherwise, default to ascending
+    if (currentSort.field === field) {
+        currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.field = field;
+        currentSort.order = 'asc';
+    }
+
+    currentPage = 1;
+    updateSortIndicators();
+    loadRules();
+}
+
+// Update sort indicators on headers
+function updateSortIndicators() {
+    const headers = document.querySelectorAll('th.sortable');
+    headers.forEach(header => {
+        const sortField = header.getAttribute('data-sort');
+        const indicator = header.querySelector('.sort-indicator');
+
+        if (sortField === currentSort.field) {
+            header.classList.add('sorted');
+            indicator.textContent = currentSort.order === 'asc' ? '▲' : '▼';
+        } else {
+            header.classList.remove('sorted');
+            indicator.textContent = '';
+        }
+    });
+}
+
 // Clear all filters
 function clearFilters() {
     document.getElementById('search-input').value = '';
@@ -600,11 +651,9 @@ function buildQueryParams() {
         performance.forEach(val => params.append('performance_impact', val));
     }
 
-    const sortBy = document.getElementById('sort-by').value;
-    params.append('sort_by', sortBy);
-
-    const sortOrder = document.getElementById('sort-order').value;
-    params.append('sort_order', sortOrder);
+    // Use current sort state (from header clicks or dropdown)
+    params.append('sort_by', currentSort.field);
+    params.append('sort_order', currentSort.order);
 
     return params;
 }

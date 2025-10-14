@@ -234,6 +234,7 @@ header h1 {
     max-width: none !important;
     min-width: 300px;
     width: auto !important;
+    z-index: 100 !important;
 }
 
 .choices__list--dropdown .choices__item {
@@ -405,7 +406,7 @@ header h1 {
     background: var(--hover-bg);
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 5;
 }
 
 .rules-table th {
@@ -415,6 +416,26 @@ header h1 {
     color: var(--text-primary);
     border-bottom: 2px solid var(--border-color);
     white-space: nowrap;
+}
+
+.rules-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.rules-table th.sortable:hover {
+    background-color: var(--border-color);
+}
+
+.rules-table th.sorted {
+    color: var(--primary-color);
+}
+
+.sort-indicator {
+    font-size: 0.7em;
+    margin-left: 4px;
+    opacity: 0.7;
 }
 
 .rules-table tbody tr {
