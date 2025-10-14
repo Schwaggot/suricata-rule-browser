@@ -97,7 +97,6 @@ async def get_rules(
     action: Optional[List[str]] = Query(None, description="Filter by action (can specify multiple)"),
     protocol: Optional[List[str]] = Query(None, description="Filter by protocol (can specify multiple)"),
     classtype: Optional[List[str]] = Query(None, description="Filter by classification type (can specify multiple)"),
-    priority: Optional[List[int]] = Query(None, description="Filter by priority (can specify multiple)"),
     sid: Optional[int] = Query(None, description="Filter by specific SID"),
     source: Optional[List[str]] = Query(None, description="Filter by rule source (can specify multiple)"),
     category: Optional[List[str]] = Query(None, description="Filter by rule category (can specify multiple)"),
@@ -107,7 +106,7 @@ async def get_rules(
     affected_product: Optional[List[str]] = Query(None, description="Filter by affected product (can specify multiple)"),
     confidence: Optional[List[str]] = Query(None, description="Filter by confidence level (can specify multiple)"),
     performance_impact: Optional[List[str]] = Query(None, description="Filter by performance impact (can specify multiple)"),
-    sort_by: Optional[str] = Query("msg", description="Sort by field (sid, priority, msg)"),
+    sort_by: Optional[str] = Query("msg", description="Sort by field (sid, msg)"),
     sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)")
 ):
     """
@@ -119,7 +118,6 @@ async def get_rules(
     - **action**: Filter by action (alert, drop, reject, pass)
     - **protocol**: Filter by protocol
     - **classtype**: Filter by classification type
-    - **priority**: Filter by priority level
     - **sid**: Filter by specific SID
     - **source**: Filter by rule source (e.g., 'et-open', 'stamus', 'local')
     - **category**: Filter by rule category (e.g., 'MALWARE', 'INFO', 'EXPLOIT')
@@ -154,47 +152,75 @@ async def get_rules(
         classtype_lower = [c.lower() for c in classtype]
         filtered_rules = [
             rule for rule in filtered_rules
-            if rule.classtype and rule.classtype.lower() in classtype_lower
+            if (rule.classtype and rule.classtype.lower() in classtype_lower) or
+               (not rule.classtype and "(unset)" in classtype)
         ]
-
-    if priority is not None:
-        filtered_rules = [rule for rule in filtered_rules if rule.priority in priority]
 
     if sid is not None:
         filtered_rules = [rule for rule in filtered_rules if rule.id == sid]
 
     if source:
-        filtered_rules = [rule for rule in filtered_rules if rule.source in source]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.source in source or
+               (not rule.source and "(unset)" in source)
+        ]
 
     if category:
         category_upper = [c.upper() for c in category]
-        filtered_rules = [rule for rule in filtered_rules if rule.category in category_upper]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.category in category_upper or
+               (not rule.category and "(unset)" in category)
+        ]
 
     if signature_severity:
-        filtered_rules = [rule for rule in filtered_rules if rule.signature_severity in signature_severity]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.signature_severity in signature_severity or
+               (not rule.signature_severity and "(unset)" in signature_severity)
+        ]
 
     if attack_target:
-        filtered_rules = [rule for rule in filtered_rules if rule.attack_target in attack_target]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.attack_target in attack_target or
+               (not rule.attack_target and "(unset)" in attack_target)
+        ]
 
     if deployment:
-        filtered_rules = [rule for rule in filtered_rules if rule.deployment in deployment]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.deployment in deployment or
+               (not rule.deployment and "(unset)" in deployment)
+        ]
 
     if affected_product:
-        filtered_rules = [rule for rule in filtered_rules if rule.affected_product in affected_product]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.affected_product in affected_product or
+               (not rule.affected_product and "(unset)" in affected_product)
+        ]
 
     if confidence:
-        filtered_rules = [rule for rule in filtered_rules if rule.confidence in confidence]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.confidence in confidence or
+               (not rule.confidence and "(unset)" in confidence)
+        ]
 
     if performance_impact:
-        filtered_rules = [rule for rule in filtered_rules if rule.performance_impact in performance_impact]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.performance_impact in performance_impact or
+               (not rule.performance_impact and "(unset)" in performance_impact)
+        ]
 
     # Sort rules
     reverse = sort_order.lower() == "desc"
 
     if sort_by == "sid":
         filtered_rules.sort(key=lambda r: r.id if r.id is not None else 0, reverse=reverse)
-    elif sort_by == "priority":
-        filtered_rules.sort(key=lambda r: r.priority if r.priority is not None else 999, reverse=reverse)
     elif sort_by == "msg":
         filtered_rules.sort(key=lambda r: r.msg if r.msg else "", reverse=reverse)
 
@@ -237,7 +263,6 @@ async def get_stats():
     actions = {}
     protocols = {}
     classtypes = {}
-    priorities = {}
     sources = {}
     categories = {}
     signature_severities = {}
@@ -255,46 +280,41 @@ async def get_stats():
         protocols[rule.protocol] = protocols.get(rule.protocol, 0) + 1
 
         # Count classtypes
-        if rule.classtype:
-            classtypes[rule.classtype] = classtypes.get(rule.classtype, 0) + 1
-
-        # Count priorities
-        if rule.priority is not None:
-            priorities[rule.priority] = priorities.get(rule.priority, 0) + 1
+        classtype_key = rule.classtype if rule.classtype else "(unset)"
+        classtypes[classtype_key] = classtypes.get(classtype_key, 0) + 1
 
         # Count sources
-        if rule.source:
-            sources[rule.source] = sources.get(rule.source, 0) + 1
+        source_key = rule.source if rule.source else "(unset)"
+        sources[source_key] = sources.get(source_key, 0) + 1
 
         # Count categories
-        if rule.category:
-            categories[rule.category] = categories.get(rule.category, 0) + 1
+        category_key = rule.category if rule.category else "(unset)"
+        categories[category_key] = categories.get(category_key, 0) + 1
 
         # Count metadata-based filters
-        if rule.signature_severity:
-            signature_severities[rule.signature_severity] = signature_severities.get(rule.signature_severity, 0) + 1
+        severity_key = rule.signature_severity if rule.signature_severity else "(unset)"
+        signature_severities[severity_key] = signature_severities.get(severity_key, 0) + 1
 
-        if rule.attack_target:
-            attack_targets[rule.attack_target] = attack_targets.get(rule.attack_target, 0) + 1
+        target_key = rule.attack_target if rule.attack_target else "(unset)"
+        attack_targets[target_key] = attack_targets.get(target_key, 0) + 1
 
-        if rule.deployment:
-            deployments[rule.deployment] = deployments.get(rule.deployment, 0) + 1
+        deployment_key = rule.deployment if rule.deployment else "(unset)"
+        deployments[deployment_key] = deployments.get(deployment_key, 0) + 1
 
-        if rule.affected_product:
-            affected_products[rule.affected_product] = affected_products.get(rule.affected_product, 0) + 1
+        product_key = rule.affected_product if rule.affected_product else "(unset)"
+        affected_products[product_key] = affected_products.get(product_key, 0) + 1
 
-        if rule.confidence:
-            confidences[rule.confidence] = confidences.get(rule.confidence, 0) + 1
+        confidence_key = rule.confidence if rule.confidence else "(unset)"
+        confidences[confidence_key] = confidences.get(confidence_key, 0) + 1
 
-        if rule.performance_impact:
-            performance_impacts[rule.performance_impact] = performance_impacts.get(rule.performance_impact, 0) + 1
+        performance_key = rule.performance_impact if rule.performance_impact else "(unset)"
+        performance_impacts[performance_key] = performance_impacts.get(performance_key, 0) + 1
 
     return {
         "total_rules": total_rules,
         "actions": actions,
         "protocols": protocols,
         "classtypes": classtypes,
-        "priorities": priorities,
         "sources": sources,
         "categories": categories,
         "signature_severities": signature_severities,

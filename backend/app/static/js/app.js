@@ -55,7 +55,6 @@ function initializeChoices() {
         'action-filter',
         'protocol-filter',
         'classtype-filter',
-        'priority-filter',
         'source-filter',
         'category-filter',
         'severity-filter',
@@ -127,7 +126,6 @@ function initializeEventListeners() {
     document.getElementById('action-filter').addEventListener('change', handleFilterChange);
     document.getElementById('protocol-filter').addEventListener('change', handleFilterChange);
     document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('priority-filter').addEventListener('change', handleFilterChange);
     document.getElementById('source-filter').addEventListener('change', handleFilterChange);
     document.getElementById('category-filter').addEventListener('change', handleFilterChange);
     document.getElementById('severity-filter').addEventListener('change', handleFilterChange);
@@ -168,7 +166,6 @@ async function loadStats() {
         populateActionFilter(data.actions);
         populateProtocolFilter(data.protocols);
         populateClasstypeFilter(data.classtypes);
-        populatePriorityFilter(data.priorities);
         populateSourceFilter(data.sources);
         populateCategoryFilter(data.categories);
         populateSeverityFilter(data.signature_severities);
@@ -210,7 +207,12 @@ function populateProtocolFilter(protocols) {
 
 // Populate classtype filter dropdown
 function populateClasstypeFilter(classtypes) {
-    const sortedClasstypes = Object.keys(classtypes).sort();
+    const sortedClasstypes = Object.keys(classtypes).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedClasstypes.map(classtype => ({
         value: classtype,
         label: `${classtype} (${classtypes[classtype]})`
@@ -221,37 +223,14 @@ function populateClasstypeFilter(classtypes) {
     }
 }
 
-// Populate priority filter dropdown
-function populatePriorityFilter(priorities) {
-    const filterGroup = document.getElementById('priority-filter')?.closest('.filter-group');
-
-    if (!priorities || Object.keys(priorities).length === 0) {
-        // Hide the filter group if no priorities available
-        if (filterGroup) {
-            filterGroup.style.display = 'none';
-        }
-        return;
-    }
-
-    // Show the filter group
-    if (filterGroup) {
-        filterGroup.style.display = 'flex';
-    }
-
-    const sortedPriorities = Object.keys(priorities).sort((a, b) => Number(a) - Number(b));
-    const choices = sortedPriorities.map(priority => ({
-        value: priority,
-        label: `Priority ${priority} (${priorities[priority]})`
-    }));
-
-    if (choicesInstances['priority-filter']) {
-        choicesInstances['priority-filter'].setChoices(choices, 'value', 'label', true);
-    }
-}
-
 // Populate source filter dropdown
 function populateSourceFilter(sources) {
-    const sortedSources = Object.keys(sources).sort();
+    const sortedSources = Object.keys(sources).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedSources.map(source => ({
         value: source,
         label: `${source} (${sources[source]})`
@@ -268,7 +247,12 @@ function populateCategoryFilter(categories) {
         return;
     }
 
-    const sortedCategories = Object.keys(categories).sort();
+    const sortedCategories = Object.keys(categories).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedCategories.map(category => ({
         value: category,
         label: `${category} (${categories[category]})`
@@ -285,7 +269,12 @@ function populateSeverityFilter(severities) {
         return;
     }
 
-    const sortedSeverities = Object.keys(severities).sort();
+    const sortedSeverities = Object.keys(severities).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedSeverities.map(severity => ({
         value: severity,
         label: `${severity} (${severities[severity]})`
@@ -302,7 +291,12 @@ function populateAttackTargetFilter(targets) {
         return;
     }
 
-    const sortedTargets = Object.keys(targets).sort();
+    const sortedTargets = Object.keys(targets).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedTargets.map(target => ({
         value: target,
         label: `${target} (${targets[target]})`
@@ -319,7 +313,12 @@ function populateDeploymentFilter(deployments) {
         return;
     }
 
-    const sortedDeployments = Object.keys(deployments).sort();
+    const sortedDeployments = Object.keys(deployments).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedDeployments.map(deployment => ({
         value: deployment,
         label: `${deployment} (${deployments[deployment]})`
@@ -336,7 +335,12 @@ function populateAffectedProductFilter(products) {
         return;
     }
 
-    const sortedProducts = Object.keys(products).sort();
+    const sortedProducts = Object.keys(products).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedProducts.map(product => ({
         value: product,
         label: `${product} (${products[product]})`
@@ -353,7 +357,12 @@ function populateConfidenceFilter(confidences) {
         return;
     }
 
-    const sortedConfidences = Object.keys(confidences).sort();
+    const sortedConfidences = Object.keys(confidences).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedConfidences.map(confidence => ({
         value: confidence,
         label: `${confidence} (${confidences[confidence]})`
@@ -370,7 +379,12 @@ function populatePerformanceFilter(impacts) {
         return;
     }
 
-    const sortedImpacts = Object.keys(impacts).sort();
+    const sortedImpacts = Object.keys(impacts).sort((a, b) => {
+        // Put "(unset)" at the end
+        if (a === "(unset)") return 1;
+        if (b === "(unset)") return -1;
+        return a.localeCompare(b);
+    });
     const choices = sortedImpacts.map(impact => ({
         value: impact,
         label: `${impact} (${impacts[impact]})`
@@ -435,11 +449,6 @@ function buildQueryParams() {
     const classtype = choicesInstances['classtype-filter']?.getValue(true);
     if (classtype && classtype.length > 0) {
         classtype.forEach(val => params.append('classtype', val));
-    }
-
-    const priority = choicesInstances['priority-filter']?.getValue(true);
-    if (priority && priority.length > 0) {
-        priority.forEach(val => params.append('priority', val));
     }
 
     const source = choicesInstances['source-filter']?.getValue(true);
@@ -566,13 +575,6 @@ function createRuleCard(rule) {
     protocolBadge.textContent = rule.protocol.toUpperCase();
     badges.appendChild(protocolBadge);
 
-    if (rule.priority !== null) {
-        const priorityBadge = document.createElement('span');
-        priorityBadge.className = 'badge badge-priority';
-        priorityBadge.textContent = `P${rule.priority}`;
-        badges.appendChild(priorityBadge);
-    }
-
     if (rule.source) {
         const sourceBadge = document.createElement('span');
         sourceBadge.className = 'badge badge-source';
@@ -693,9 +695,6 @@ function showRuleDetail(rule) {
 
                 <div class="detail-label">Classification:</div>
                 <div class="detail-value">${rule.classtype || 'N/A'}</div>
-
-                <div class="detail-label">Priority:</div>
-                <div class="detail-value">${rule.priority !== null ? rule.priority : 'N/A'}</div>
 
                 <div class="detail-label">Revision:</div>
                 <div class="detail-value">${rule.rev || 'N/A'}</div>
