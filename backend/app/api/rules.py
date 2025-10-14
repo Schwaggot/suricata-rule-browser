@@ -107,7 +107,7 @@ async def get_rules(
     affected_product: Optional[List[str]] = Query(None, description="Filter by affected product (can specify multiple)"),
     confidence: Optional[List[str]] = Query(None, description="Filter by confidence level (can specify multiple)"),
     performance_impact: Optional[List[str]] = Query(None, description="Filter by performance impact (can specify multiple)"),
-    sort_by: Optional[str] = Query("sid", description="Sort by field (sid, priority, msg)"),
+    sort_by: Optional[str] = Query("msg", description="Sort by field (sid, priority, msg)"),
     sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)")
 ):
     """

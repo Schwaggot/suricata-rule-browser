@@ -10,11 +10,44 @@ let choicesInstances = {};
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
+    initializeTheme();
     initializeChoices();
     initializeEventListeners();
     loadStats();
     loadRules();
 });
+
+// Initialize theme from localStorage or system preference
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.style.colorScheme = 'dark';
+        updateThemeIcon('dark');
+    } else {
+        document.documentElement.style.colorScheme = 'light';
+        updateThemeIcon('light');
+    }
+}
+
+// Toggle theme
+function toggleTheme() {
+    const currentScheme = document.documentElement.style.colorScheme;
+    const newScheme = currentScheme === 'dark' ? 'light' : 'dark';
+
+    document.documentElement.style.colorScheme = newScheme;
+    localStorage.setItem('theme', newScheme);
+    updateThemeIcon(newScheme);
+}
+
+// Update theme icon
+function updateThemeIcon(theme) {
+    const icon = document.querySelector('.theme-icon');
+    if (icon) {
+        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+}
 
 // Initialize Choices.js for all filter dropdowns
 function initializeChoices() {
@@ -80,6 +113,9 @@ function initializeChoices() {
 
 // Set up event listeners
 function initializeEventListeners() {
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
     // Search
     document.getElementById('search-btn').addEventListener('click', handleSearch);
     document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -368,7 +404,7 @@ function clearFilters() {
         }
     });
 
-    document.getElementById('sort-by').value = 'sid';
+    document.getElementById('sort-by').value = 'msg';
     document.getElementById('sort-order').value = 'asc';
     currentPage = 1;
     currentFilters = {};
