@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Transforms - Suricata Rule Browser{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <h2>Rule Transforms</h2>
+    <p>Define filter-based transforms to add metadata and modify rules based on matching conditions.</p>
+
+    <div class="transform-form">
+        <h3>Create New Transform</h3>
+        <form id="create-transform-form">
+            <div class="form-group">
+                <label for="transform-name">Name:</label>
+                <input type="text" id="transform-name" required placeholder="e.g., Add FTP metadata">
+            </div>
+
+            <div class="form-group">
+                <label for="transform-description">Description:</label>
+                <textarea id="transform-description" placeholder="Optional description"></textarea>
+            </div>
+
+            <h4>Rule Filter</h4>
+            <div id="criteria-container">
+                <!-- Filter rows will be added here dynamically -->
+            </div>
+            <div class="filter-actions">
+                <button type="button" id="add-filter-btn" class="btn btn-secondary">+ Add Filter</button>
+                <button type="button" id="test-filter-btn" class="btn btn-secondary">Test Filter</button>
+            </div>
+
+            <h4>Action</h4>
+            <div class="action-section">
+                <div class="form-group">
+                    <label for="action-type">Action Type:</label>
+                    <select id="action-type">
+                        <option value="add_metadata">Add Metadata</option>
+                        <option value="modify_metadata">Modify Metadata</option>
+                        <option value="update_priority">Update Priority</option>
+                        <option value="add_reference">Add Reference</option>
+                        <option value="add_tag">Add Tag</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="action-key">Key/Field:</label>
+                    <input type="text" id="action-key" placeholder="e.g., protocol_type">
+                </div>
+
+                <div class="form-group">
+                    <label for="action-value">Value:</label>
+                    <input type="text" id="action-value" required placeholder="e.g., ftp">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Create Transform</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="transforms-list">
+        <h3>Saved Transforms</h3>
+        <div id="loading-transforms" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading transforms...</p>
+        </div>
+        <div id="transforms-container"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Test Filter Results Modal -->
+<div id="test-filter-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Filter Test Results</h2>
+            <span class="close" id="close-test-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="filter-summary">
+                <h4>Filter Criteria</h4>
+                <div id="modal-filter-summary" class="filter-summary-content"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total Matched Rules:</span>
+                    <span id="modal-total-matched" class="stat-value">0</span>
+                </div>
+            </div>
+
+            <div class="breakdown-section">
+                <div class="breakdown-column">
+                    <h4>By Source</h4>
+                    <div id="modal-breakdown-source"></div>
+                </div>
+                <div class="breakdown-column">
+                    <h4>By Category</h4>
+                    <div id="modal-breakdown-category"></div>
+                </div>
+                <div class="breakdown-column">
+                    <h4>By Action</h4>
+                    <div id="modal-breakdown-action"></div>
+                </div>
+            </div>
+
+            <div class="example-matches">
+                <h4>Example Matched Rules (first 10)</h4>
+                <table class="matches-table">
+                    <thead>
+                        <tr>
+                            <th>SID</th>
+                            <th>Message</th>
+                            <th>Source</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-example-matches-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/transforms.js?v=10"></script>
+{% endblock %}

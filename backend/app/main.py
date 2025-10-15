@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-from app.api import rules
+from app.api import rules, transforms
 
 
 @asynccontextmanager
@@ -33,12 +33,23 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 # Include API routers
 app.include_router(rules.router, prefix="/api/v1", tags=["rules"])
+app.include_router(transforms.router, prefix="/api/v1", tags=["transforms"])
 
-# Root endpoint - serves the main page
+# Page endpoints
 @app.get("/")
-async def read_root(request: Request):
-    """Render the main rule browser page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+async def browser_page(request: Request):
+    """Render the rules browser page"""
+    return templates.TemplateResponse("browser.html", {"request": request, "active_page": "browser"})
+
+@app.get("/transforms")
+async def transforms_page(request: Request):
+    """Render the transforms page"""
+    return templates.TemplateResponse("transforms.html", {"request": request, "active_page": "transforms"})
+
+@app.get("/about")
+async def about_page(request: Request):
+    """Render the about page"""
+    return templates.TemplateResponse("about.html", {"request": request, "active_page": "about"})
 
 @app.get("/health")
 async def health_check():

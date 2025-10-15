@@ -38,12 +38,23 @@ let visibleColumns = {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
-    initializeColumnVisibility();
-    initializeChoices();
-    initializeEventListeners();
-    updateSortIndicators(); // Show default sort indicator
-    loadStats();
-    loadRules();
+
+    // Set up theme toggle (works on all pages)
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+
+    // Only initialize rules-specific functionality if we're on the rules page
+    const rulesTable = document.getElementById('rules-table');
+    if (rulesTable) {
+        initializeColumnVisibility();
+        initializeChoices();
+        initializeEventListeners();
+        updateSortIndicators(); // Show default sort indicator
+        loadStats();
+        loadRules();
+    }
 });
 
 // Initialize theme from localStorage or system preference
