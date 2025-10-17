@@ -46,6 +46,9 @@ class SuricataRule(BaseModel):
     source: Optional[str] = Field(None, description="Rule source (e.g., 'et-open', 'stamus', 'local')")
     source_file: Optional[str] = Field(None, description="Original filename")
 
+    # Rule state
+    enabled: bool = Field(True, description="Whether the rule is enabled (False if commented out)")
+
     # Category tracking (extracted from message prefix like "ET MALWARE", "ET INFO")
     category: Optional[str] = Field(None, description="Rule category (e.g., 'MALWARE', 'INFO', 'EXPLOIT')")
 

@@ -19,7 +19,7 @@ let columnWidths = {};
 
 // Column order (must match the order in createRuleRow)
 const columnOrder = [
-    'sid', 'action', 'protocol', 'message', 'source', 'category', 'classtype',
+    'sid', 'action', 'status', 'protocol', 'message', 'source', 'category', 'classtype',
     'severity', 'attack_target', 'deployment', 'affected_product',
     'confidence', 'performance', 'network', 'revision'
 ];
@@ -28,6 +28,7 @@ const columnOrder = [
 let visibleColumns = {
     sid: false,
     action: false,
+    status: false,
     protocol: true,
     message: true,
     source: true,
@@ -243,7 +244,8 @@ function initializeChoices() {
         'deployment-filter',
         'affected-product-filter',
         'confidence-filter',
-        'performance-filter'
+        'performance-filter',
+        'enabled-filter'
     ];
 
     filterIds.forEach(id => {
@@ -360,6 +362,7 @@ function initializeEventListeners() {
     document.getElementById('affected-product-filter').addEventListener('change', handleFilterChange);
     document.getElementById('confidence-filter').addEventListener('change', handleFilterChange);
     document.getElementById('performance-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('enabled-filter').addEventListener('change', handleFilterChange);
 
     // Pagination - Top
     document.getElementById('prev-page-top').addEventListener('click', () => changePage(-1));
@@ -412,6 +415,7 @@ async function loadStats() {
         populateAffectedProductFilter(data.affected_products);
         populateConfidenceFilter(data.confidences);
         populatePerformanceFilter(data.performance_impacts);
+        populateEnabledFilter(data.enabled_status);
     } catch (error) {
         console.error('Error loading stats:', error);
     }
@@ -633,6 +637,22 @@ function populatePerformanceFilter(impacts) {
     }
 }
 
+// Populate enabled filter dropdown
+function populateEnabledFilter(enabledStatus) {
+    if (!enabledStatus || Object.keys(enabledStatus).length === 0) {
+        return;
+    }
+
+    const choices = [
+        { value: 'true', label: `Enabled (${enabledStatus['true'] || 0})` },
+        { value: 'false', label: `Disabled (${enabledStatus['false'] || 0})` }
+    ];
+
+    if (choicesInstances['enabled-filter']) {
+        choicesInstances['enabled-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
 // Handle search
 function handleSearch() {
     currentPage = 1;
@@ -785,6 +805,11 @@ function buildQueryParams() {
         performance.forEach(val => params.append('performance_impact', val));
     }
 
+    const enabled = choicesInstances['enabled-filter']?.getValue(true);
+    if (enabled && enabled.length > 0) {
+        enabled.forEach(val => params.append('enabled', val));
+    }
+
     // Use current sort state (from header clicks or dropdown)
     params.append('sort_by', currentSort.field);
     params.append('sort_order', currentSort.order);
@@ -823,7 +848,7 @@ function displayRules(data) {
     rulesList.innerHTML = '';
 
     if (data.rules.length === 0) {
-        rulesList.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 40px;">No rules found matching your criteria.</td></tr>';
+        rulesList.innerHTML = '<tr><td colspan="16" style="text-align: center; padding: 40px;">No rules found matching your criteria.</td></tr>';
         return;
     }
 
@@ -871,6 +896,14 @@ function createRuleRow(rule) {
     actionBadge.textContent = rule.action.toUpperCase();
     actionCell.appendChild(actionBadge);
     row.appendChild(actionCell);
+
+    // Status column
+    const statusCell = document.createElement('td');
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `badge badge-status ${rule.enabled ? 'enabled' : 'disabled'}`;
+    statusBadge.textContent = rule.enabled ? 'ENABLED' : 'DISABLED';
+    statusCell.appendChild(statusBadge);
+    row.appendChild(statusCell);
 
     // Protocol column
     const protocolCell = document.createElement('td');

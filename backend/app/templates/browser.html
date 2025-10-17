@@ -81,6 +81,11 @@
             <label for="performance-filter">Performance Impact:</label>
             <select id="performance-filter" multiple></select>
         </div>
+
+        <div class="filter-group">
+            <label for="enabled-filter">Status:</label>
+            <select id="enabled-filter" multiple></select>
+        </div>
     </div>
 </div>
 
@@ -119,6 +124,10 @@
                 <label class="column-option">
                     <input type="checkbox" data-column="action">
                     <span>Action</span>
+                </label>
+                <label class="column-option">
+                    <input type="checkbox" data-column="status">
+                    <span>Status</span>
                 </label>
                 <label class="column-option">
                     <input type="checkbox" data-column="protocol" checked>
@@ -182,6 +191,7 @@
                 <tr>
                     <th data-column="sid" data-sort="sid" class="sortable resizable">SID <span class="sort-indicator"></span><div class="resize-handle"></div></th>
                     <th data-column="action" data-sort="action" class="sortable resizable">Action <span class="sort-indicator"></span><div class="resize-handle"></div></th>
+                    <th data-column="status" data-sort="enabled" class="sortable resizable" style="display: none;">Status <span class="sort-indicator"></span><div class="resize-handle"></div></th>
                     <th data-column="protocol" data-sort="protocol" class="sortable resizable">Protocol <span class="sort-indicator"></span><div class="resize-handle"></div></th>
                     <th data-column="message" data-sort="msg" class="sortable resizable">Message <span class="sort-indicator"></span><div class="resize-handle"></div></th>
                     <th data-column="source" data-sort="source" class="sortable resizable">Source <span class="sort-indicator"></span><div class="resize-handle"></div></th>

@@ -78,8 +78,14 @@ def load_rules():
     _rules_cache = all_rules
     _rules_loaded = True
 
+    # Count enabled and disabled rules
+    enabled_count = sum(1 for rule in _rules_cache if rule.enabled)
+    disabled_count = sum(1 for rule in _rules_cache if not rule.enabled)
+
     print("\n" + "="*60)
     print(f"Successfully loaded {len(_rules_cache)} rules from {len([s for s in downloader.sources if s.enabled])} sources")
+    print(f"  - {enabled_count} enabled")
+    print(f"  - {disabled_count} disabled")
     print("="*60 + "\n")
 
 
@@ -100,6 +106,7 @@ async def get_rules(
     affected_product: Optional[List[str]] = Query(None, description="Filter by affected product (can specify multiple)"),
     confidence: Optional[List[str]] = Query(None, description="Filter by confidence level (can specify multiple)"),
     performance_impact: Optional[List[str]] = Query(None, description="Filter by performance impact (can specify multiple)"),
+    enabled: Optional[List[str]] = Query(None, description="Filter by enabled status (true/false, can specify multiple)"),
     sort_by: Optional[str] = Query("msg", description="Sort by field (sid, msg)"),
     sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)")
 ):
@@ -210,6 +217,14 @@ async def get_rules(
                (not rule.performance_impact and "(unset)" in performance_impact)
         ]
 
+    if enabled:
+        # Convert string values to boolean
+        enabled_bool = [e.lower() == 'true' for e in enabled]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.enabled in enabled_bool
+        ]
+
     # Sort rules
     reverse = sort_order.lower() == "desc"
 
@@ -218,6 +233,7 @@ async def get_rules(
         "sid": lambda r: r.id if r.id is not None else 0,
         "msg": lambda r: (r.msg or "").lower(),
         "action": lambda r: r.action.value,
+        "enabled": lambda r: r.enabled,
         "protocol": lambda r: r.protocol.lower(),
         "source": lambda r: (r.source or "").lower(),
         "category": lambda r: (r.category or "").lower(),
@@ -285,6 +301,7 @@ async def get_stats():
     affected_products = {}
     confidences = {}
     performance_impacts = {}
+    enabled_status = {}
 
     for rule in _rules_cache:
         # Count actions
@@ -324,6 +341,10 @@ async def get_stats():
         performance_key = rule.performance_impact if rule.performance_impact else "(unset)"
         performance_impacts[performance_key] = performance_impacts.get(performance_key, 0) + 1
 
+        # Count enabled status
+        enabled_key = "true" if rule.enabled else "false"
+        enabled_status[enabled_key] = enabled_status.get(enabled_key, 0) + 1
+
     return {
         "total_rules": total_rules,
         "actions": actions,
@@ -336,7 +357,8 @@ async def get_stats():
         "deployments": deployments,
         "affected_products": affected_products,
         "confidences": confidences,
-        "performance_impacts": performance_impacts
+        "performance_impacts": performance_impacts,
+        "enabled_status": enabled_status
     }
 
 

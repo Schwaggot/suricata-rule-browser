@@ -79,9 +79,22 @@ class SuricataRuleParser:
         """
         rule_text = rule_text.strip()
 
-        # Skip comments and empty lines
-        if not rule_text or rule_text.startswith('#'):
+        # Skip empty lines
+        if not rule_text:
             return None
+
+        # Check if rule is commented out (disabled)
+        enabled = True
+        if rule_text.startswith('#'):
+            # Check if this is a commented out rule or just a regular comment
+            # A commented out rule will start with # followed by alert/drop/reject/pass
+            uncommented = rule_text.lstrip('#').strip()
+            if not uncommented or not any(uncommented.startswith(action) for action in ['alert', 'drop', 'reject', 'pass']):
+                # This is a regular comment, not a disabled rule
+                return None
+            # This is a disabled rule, parse it
+            enabled = False
+            rule_text = uncommented
 
         try:
             # Use suricataparser library to parse the rule
@@ -206,6 +219,7 @@ class SuricataRuleParser:
                 tags=tags,
                 source=source,
                 source_file=source_file,
+                enabled=enabled,
                 category=category,
                 signature_severity=signature_severity,
                 attack_target=attack_target,
