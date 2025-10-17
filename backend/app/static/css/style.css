@@ -671,8 +671,45 @@ header h1 {
     font-weight: 500;
     font-size: 0.9rem;
     color: var(--text-primary);
-    min-width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.page-input {
+    width: 60px;
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
     text-align: center;
+    font-size: 0.9rem;
+}
+
+.page-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.page-size-select {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.page-size-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.page-size-select:hover {
+    border-color: var(--primary-color);
 }
 
 .btn-pagination {

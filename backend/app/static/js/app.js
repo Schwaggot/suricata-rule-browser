@@ -2,6 +2,8 @@
 
 const API_BASE = '/api/v1';
 let currentPage = 1;
+let pageSize = 50;
+let totalPages = 1;
 let currentFilters = {};
 let totalRules = 0;
 let currentSort = { field: 'msg', order: 'asc' };
@@ -275,10 +277,20 @@ function initializeEventListeners() {
     // Pagination - Top
     document.getElementById('prev-page-top').addEventListener('click', () => changePage(-1));
     document.getElementById('next-page-top').addEventListener('click', () => changePage(1));
+    document.getElementById('page-input-top').addEventListener('change', handlePageInputChange);
+    document.getElementById('page-input-top').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handlePageInputChange(e);
+    });
+    document.getElementById('page-size-top').addEventListener('change', handlePageSizeChange);
 
     // Pagination - Bottom
     document.getElementById('prev-page-bottom').addEventListener('click', () => changePage(-1));
     document.getElementById('next-page-bottom').addEventListener('click', () => changePage(1));
+    document.getElementById('page-input-bottom').addEventListener('change', handlePageInputChange);
+    document.getElementById('page-input-bottom').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handlePageInputChange(e);
+    });
+    document.getElementById('page-size-bottom').addEventListener('change', handlePageSizeChange);
 
     // Modal
     const modal = document.getElementById('rule-modal');
@@ -546,6 +558,30 @@ function handleFilterChange() {
     loadRules();
 }
 
+// Handle page number input change
+function handlePageInputChange(e) {
+    const newPage = parseInt(e.target.value);
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        loadRules();
+    } else {
+        // Reset to current page if invalid
+        updatePaginationInputs();
+    }
+}
+
+// Handle page size change
+function handlePageSizeChange(e) {
+    pageSize = parseInt(e.target.value);
+    currentPage = 1; // Reset to first page when changing page size
+
+    // Sync both dropdowns
+    document.getElementById('page-size-top').value = pageSize;
+    document.getElementById('page-size-bottom').value = pageSize;
+
+    loadRules();
+}
+
 // Handle column sort
 function handleSort(field) {
     // If clicking the same field, toggle order; otherwise, default to ascending
@@ -601,7 +637,7 @@ function buildQueryParams() {
     const params = new URLSearchParams();
 
     params.append('page', currentPage);
-    params.append('page_size', 50);
+    params.append('page_size', pageSize);
 
     const search = document.getElementById('search-input').value.trim();
     if (search) params.append('search', search);
@@ -1048,26 +1084,25 @@ function formatRawRule(rawRule) {
 
 // Update pagination controls
 function updatePagination(data) {
-    const totalPages = Math.ceil(data.total / data.page_size);
-    const pageText = `Page ${data.page} of ${totalPages} (${data.total} rules)`;
+    totalPages = Math.ceil(data.total / data.page_size);
 
     // Update top pagination
-    const pageInfoTop = document.getElementById('page-info-top');
-    const prevBtnTop = document.getElementById('prev-page-top');
-    const nextBtnTop = document.getElementById('next-page-top');
-
-    pageInfoTop.textContent = pageText;
-    prevBtnTop.disabled = data.page <= 1;
-    nextBtnTop.disabled = data.page >= totalPages;
+    document.getElementById('page-input-top').value = data.page;
+    document.getElementById('total-pages-top').textContent = totalPages;
+    document.getElementById('prev-page-top').disabled = data.page <= 1;
+    document.getElementById('next-page-top').disabled = data.page >= totalPages;
 
     // Update bottom pagination
-    const pageInfoBottom = document.getElementById('page-info-bottom');
-    const prevBtnBottom = document.getElementById('prev-page-bottom');
-    const nextBtnBottom = document.getElementById('next-page-bottom');
+    document.getElementById('page-input-bottom').value = data.page;
+    document.getElementById('total-pages-bottom').textContent = totalPages;
+    document.getElementById('prev-page-bottom').disabled = data.page <= 1;
+    document.getElementById('next-page-bottom').disabled = data.page >= totalPages;
+}
 
-    pageInfoBottom.textContent = pageText;
-    prevBtnBottom.disabled = data.page <= 1;
-    nextBtnBottom.disabled = data.page >= totalPages;
+// Update pagination inputs (used when resetting invalid input)
+function updatePaginationInputs() {
+    document.getElementById('page-input-top').value = currentPage;
+    document.getElementById('page-input-bottom').value = currentPage;
 }
 
 // Change page

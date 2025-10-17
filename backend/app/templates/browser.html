@@ -95,8 +95,17 @@
     <div class="table-controls">
         <div class="pagination pagination-top" id="pagination-top">
             <button id="prev-page-top" class="btn-pagination">‹</button>
-            <span id="page-info-top" class="page-info">Page 1</span>
+            <span class="page-info">
+                Page <input type="number" id="page-input-top" class="page-input" min="1" value="1"> of <span id="total-pages-top">1</span>
+            </span>
             <button id="next-page-top" class="btn-pagination">›</button>
+            <select id="page-size-top" class="page-size-select">
+                <option value="25">25 per page</option>
+                <option value="50" selected>50 per page</option>
+                <option value="100">100 per page</option>
+                <option value="200">200 per page</option>
+                <option value="500">500 per page</option>
+            </select>
         </div>
 
         <div class="column-toggle-wrapper">
@@ -195,8 +204,17 @@
 
 <div class="pagination pagination-bottom" id="pagination-bottom">
     <button id="prev-page-bottom" class="btn-pagination">‹</button>
-    <span id="page-info-bottom" class="page-info">Page 1</span>
+    <span class="page-info">
+        Page <input type="number" id="page-input-bottom" class="page-input" min="1" value="1"> of <span id="total-pages-bottom">1</span>
+    </span>
     <button id="next-page-bottom" class="btn-pagination">›</button>
+    <select id="page-size-bottom" class="page-size-select">
+        <option value="25">25 per page</option>
+        <option value="50" selected>50 per page</option>
+        <option value="100">100 per page</option>
+        <option value="200">200 per page</option>
+        <option value="500">500 per page</option>
+    </select>
 </div>
 {% endblock %}
 
