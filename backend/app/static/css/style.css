@@ -8,21 +8,21 @@
 :root {
     color-scheme: light dark;
 
-    --primary-color: light-dark(#2563eb, #60a5fa);
-    --secondary-color: light-dark(#64748b, #94a3b8);
-    --success-color: light-dark(#22c55e, #4ade80);
-    --danger-color: light-dark(#ef4444, #f87171);
-    --warning-color: light-dark(#f59e0b, #fbbf24);
-    --bg-color: light-dark(#f8fafc, #0f172a);
-    --card-bg: light-dark(#ffffff, #1e293b);
-    --text-primary: light-dark(#0f172a, #f1f5f9);
-    --text-secondary: light-dark(#475569, #94a3b8);
-    --border-color: light-dark(#e2e8f0, #334155);
-    --hover-bg: light-dark(#f1f5f9, #334155);
-    --input-bg: light-dark(#ffffff, #0f172a);
-    --code-bg: light-dark(#f5f5f5, #020617);
-    --code-text: light-dark(#333, #f8f8f2);
-    --code-header: light-dark(#0066cc, #60a5fa);
+    --primary-color: light-dark(#2563eb, #58a6ff);
+    --secondary-color: light-dark(#64748b, #8b949e);
+    --success-color: light-dark(#22c55e, #3fb950);
+    --danger-color: light-dark(#ef4444, #f85149);
+    --warning-color: light-dark(#f59e0b, #d29922);
+    --bg-color: light-dark(#f8fafc, #0d1117);
+    --card-bg: light-dark(#ffffff, #161b22);
+    --text-primary: light-dark(#0f172a, #c9d1d9);
+    --text-secondary: light-dark(#475569, #8b949e);
+    --border-color: light-dark(#e2e8f0, #30363d);
+    --hover-bg: light-dark(#f1f5f9, #21262d);
+    --input-bg: light-dark(#ffffff, #0d1117);
+    --code-bg: light-dark(#f5f5f5, #161b22);
+    --code-text: light-dark(#333, #c9d1d9);
+    --code-header: light-dark(#0066cc, #58a6ff);
 }
 
 body {
@@ -31,6 +31,42 @@ body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     line-height: 1.6;
+    position: relative;
+}
+
+/* Subtle background pattern for dark mode */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    background-image:
+        /* Subtle dot grid pattern */
+        radial-gradient(circle, rgba(156, 163, 175, 0.08) 1px, transparent 1px),
+        /* Ambient light effects */
+        radial-gradient(ellipse at 10% 20%, rgba(156, 163, 175, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 80%, rgba(156, 163, 175, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(156, 163, 175, 0.02) 0%, transparent 60%);
+    background-size: 32px 32px, 100% 100%, 100% 100%, 100% 100%;
+    background-position: 0 0, 0 0, 0 0, 0 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Show pattern only in dark mode */
+@media (prefers-color-scheme: dark) {
+    body::before {
+        opacity: 1;
+    }
+}
+
+/* Also show when manually set to dark */
+[style*="color-scheme: dark"] body::before {
+    opacity: 1;
 }
 
 .container {
@@ -203,7 +239,7 @@ header h1 {
 }
 
 .btn-primary:hover {
-    background-color: #1d4ed8;
+    opacity: 0.85;
 }
 
 .btn-secondary {
@@ -626,7 +662,7 @@ header h1 {
 
 .expand-btn:hover,
 .collapse-btn:hover {
-    color: #1d4ed8;
+    opacity: 0.7;
     text-decoration: underline;
 }
 
@@ -885,7 +921,7 @@ header h1 {
 }
 
 .reference-link:hover {
-    color: #1d4ed8;
+    opacity: 0.7;
     text-decoration: underline;
 }
 
