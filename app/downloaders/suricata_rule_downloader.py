@@ -78,7 +78,7 @@ class SuricataRuleDownloader:
             config_path: Path to rules.yaml (default: project_root/rules.yaml)
         """
         # Set default config path
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        project_root = Path(__file__).resolve().parent.parent.parent
         self.config_path = config_path or project_root / "rules.yaml"
 
         # Set up directories
@@ -380,9 +380,9 @@ class SuricataRuleDownloader:
                 print(f"Skipping disabled source: {source.name}")
                 continue
 
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Processing source: {source.name} ({source.type})")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             try:
                 if source.type == 'url':

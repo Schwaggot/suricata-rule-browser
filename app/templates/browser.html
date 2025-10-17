@@ -17,10 +17,10 @@
 <div class="controls-section">
     <div class="search-box">
         <input
-            type="text"
-            id="search-input"
-            placeholder="Search rules (message, SID, tags)..."
-            autocomplete="off"
+                type="text"
+                id="search-input"
+                placeholder="Search rules (message, SID, tags)..."
+                autocomplete="off"
         >
         <button id="search-btn" class="btn btn-primary">Search</button>
         <button id="clear-btn" class="btn btn-secondary">Clear</button>
@@ -104,7 +104,8 @@
             </span>
             <button id="prev-page-top" class="btn-pagination">‹</button>
             <span class="page-info">
-                Page <input type="number" id="page-input-top" class="page-input" min="1" value="1"> of <span id="total-pages-top">1</span>
+                Page <input type="number" id="page-input-top" class="page-input" min="1" value="1"> of <span
+                    id="total-pages-top">1</span>
             </span>
             <button id="next-page-top" class="btn-pagination">›</button>
             <select id="page-size-top" class="page-size-select">
@@ -191,24 +192,71 @@
     <div class="table-wrapper">
         <table id="rules-table" class="rules-table">
             <thead>
-                <tr>
-                    <th data-column="sid" data-sort="sid" class="sortable resizable">SID <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="action" data-sort="action" class="sortable resizable">Action <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="status" data-sort="enabled" class="sortable resizable" style="display: none;">Status <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="protocol" data-sort="protocol" class="sortable resizable">Protocol <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="message" data-sort="msg" class="sortable resizable">Message <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="source" data-sort="source" class="sortable resizable">Source <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="category" data-sort="category" class="sortable resizable">Category <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="classtype" data-sort="classtype" class="sortable resizable">Class Type <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="severity" data-sort="severity" class="sortable resizable" style="display: none;">Severity <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="attack_target" data-sort="attack_target" class="sortable resizable" style="display: none;">Attack Target <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="deployment" data-sort="deployment" class="sortable resizable" style="display: none;">Deployment <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="affected_product" data-sort="affected_product" class="sortable resizable" style="display: none;">Affected Product <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="confidence" data-sort="confidence" class="sortable resizable" style="display: none;">Confidence <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="performance" data-sort="performance" class="sortable resizable" style="display: none;">Performance Impact <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                    <th data-column="network" class="resizable">Network<div class="resize-handle"></div></th>
-                    <th data-column="revision" data-sort="rev" class="sortable resizable" style="display: none;">Revision <span class="sort-indicator"></span><div class="resize-handle"></div></th>
-                </tr>
+            <tr>
+                <th data-column="sid" data-sort="sid" class="sortable resizable">SID <span
+                        class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="action" data-sort="action" class="sortable resizable">Action <span
+                        class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="status" data-sort="enabled" class="sortable resizable" style="display: none;">Status
+                    <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="protocol" data-sort="protocol" class="sortable resizable">Protocol <span
+                        class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="message" data-sort="msg" class="sortable resizable">Message <span
+                        class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="source" data-sort="source" class="sortable resizable">Source <span
+                        class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="category" data-sort="category" class="sortable resizable">Category <span
+                        class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="classtype" data-sort="classtype" class="sortable resizable">Class Type <span
+                        class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="severity" data-sort="severity" class="sortable resizable" style="display: none;">
+                    Severity <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="attack_target" data-sort="attack_target" class="sortable resizable"
+                    style="display: none;">Attack Target <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="deployment" data-sort="deployment" class="sortable resizable" style="display: none;">
+                    Deployment <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="affected_product" data-sort="affected_product" class="sortable resizable"
+                    style="display: none;">Affected Product <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="confidence" data-sort="confidence" class="sortable resizable" style="display: none;">
+                    Confidence <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="performance" data-sort="performance" class="sortable resizable" style="display: none;">
+                    Performance Impact <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="network" class="resizable">Network
+                    <div class="resize-handle"></div>
+                </th>
+                <th data-column="revision" data-sort="rev" class="sortable resizable" style="display: none;">Revision
+                    <span class="sort-indicator"></span>
+                    <div class="resize-handle"></div>
+                </th>
+            </tr>
             </thead>
             <tbody id="rules-list"></tbody>
         </table>
@@ -221,7 +269,8 @@
     </span>
     <button id="prev-page-bottom" class="btn-pagination">‹</button>
     <span class="page-info">
-        Page <input type="number" id="page-input-bottom" class="page-input" min="1" value="1"> of <span id="total-pages-bottom">1</span>
+        Page <input type="number" id="page-input-bottom" class="page-input" min="1" value="1"> of <span
+            id="total-pages-bottom">1</span>
     </span>
     <button id="next-page-bottom" class="btn-pagination">›</button>
     <select id="page-size-bottom" class="page-size-select">

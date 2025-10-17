@@ -56,7 +56,8 @@ class TransformRule(BaseModel):
     name: str = Field(..., description="Human-readable name")
     description: Optional[str] = Field(None, description="Description of what this transform does")
     enabled: bool = Field(default=True, description="Whether this transform is active")
-    criteria: Union[TransformCriteria, List[TransformCriteria]] = Field(..., description="Matching criteria (single or list, combined with AND)")
+    criteria: Union[TransformCriteria, List[TransformCriteria]] = Field(...,
+                                                                        description="Matching criteria (single or list, combined with AND)")
     actions: List[TransformAction] = Field(..., description="Actions to apply to matched rules")
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = Field(default_factory=datetime.now)

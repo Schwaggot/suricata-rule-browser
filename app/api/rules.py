@@ -23,9 +23,9 @@ def load_rules():
     if _rules_loaded:
         return
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Initializing Suricata Rule Browser")
-    print("="*60)
+    print("=" * 60)
 
     # Initialize downloader (reads rules.yaml)
     downloader = SuricataRuleDownloader()
@@ -35,12 +35,12 @@ def load_rules():
     downloader.download_all(force=False)
 
     # Now parse rules from all sources
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Parsing rules from all sources")
-    print("="*60)
+    print("=" * 60)
 
     all_rules = []
-    base_dir = Path(__file__).resolve().parent.parent.parent.parent
+    base_dir = Path(__file__).resolve().parent.parent.parent
 
     for source in downloader.sources:
         if not source.enabled:
@@ -82,33 +82,39 @@ def load_rules():
     enabled_count = sum(1 for rule in _rules_cache if rule.enabled)
     disabled_count = sum(1 for rule in _rules_cache if not rule.enabled)
 
-    print("\n" + "="*60)
-    print(f"Successfully loaded {len(_rules_cache)} rules from {len([s for s in downloader.sources if s.enabled])} sources")
+    print("\n" + "=" * 60)
+    print(
+        f"Successfully loaded {len(_rules_cache)} rules from {len([s for s in downloader.sources if s.enabled])} sources")
     print(f"  - {enabled_count} enabled")
     print(f"  - {disabled_count} disabled")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 @router.get("/rules", response_model=RuleResponse)
 async def get_rules(
-    page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(50, ge=1, le=1000, description="Number of rules per page"),
-    search: Optional[str] = Query(None, description="Search in message, SID, and content"),
-    action: Optional[List[str]] = Query(None, description="Filter by action (can specify multiple)"),
-    protocol: Optional[List[str]] = Query(None, description="Filter by protocol (can specify multiple)"),
-    classtype: Optional[List[str]] = Query(None, description="Filter by classification type (can specify multiple)"),
-    sid: Optional[int] = Query(None, description="Filter by specific SID"),
-    source: Optional[List[str]] = Query(None, description="Filter by rule source (can specify multiple)"),
-    category: Optional[List[str]] = Query(None, description="Filter by rule category (can specify multiple)"),
-    signature_severity: Optional[List[str]] = Query(None, description="Filter by signature severity (can specify multiple)"),
-    attack_target: Optional[List[str]] = Query(None, description="Filter by attack target (can specify multiple)"),
-    deployment: Optional[List[str]] = Query(None, description="Filter by deployment type (can specify multiple)"),
-    affected_product: Optional[List[str]] = Query(None, description="Filter by affected product (can specify multiple)"),
-    confidence: Optional[List[str]] = Query(None, description="Filter by confidence level (can specify multiple)"),
-    performance_impact: Optional[List[str]] = Query(None, description="Filter by performance impact (can specify multiple)"),
-    enabled: Optional[List[str]] = Query(None, description="Filter by enabled status (true/false, can specify multiple)"),
-    sort_by: Optional[str] = Query("msg", description="Sort by field (sid, msg)"),
-    sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)")
+        page: int = Query(1, ge=1, description="Page number"),
+        page_size: int = Query(50, ge=1, le=1000, description="Number of rules per page"),
+        search: Optional[str] = Query(None, description="Search in message, SID, and content"),
+        action: Optional[List[str]] = Query(None, description="Filter by action (can specify multiple)"),
+        protocol: Optional[List[str]] = Query(None, description="Filter by protocol (can specify multiple)"),
+        classtype: Optional[List[str]] = Query(None,
+                                               description="Filter by classification type (can specify multiple)"),
+        sid: Optional[int] = Query(None, description="Filter by specific SID"),
+        source: Optional[List[str]] = Query(None, description="Filter by rule source (can specify multiple)"),
+        category: Optional[List[str]] = Query(None, description="Filter by rule category (can specify multiple)"),
+        signature_severity: Optional[List[str]] = Query(None,
+                                                        description="Filter by signature severity (can specify multiple)"),
+        attack_target: Optional[List[str]] = Query(None, description="Filter by attack target (can specify multiple)"),
+        deployment: Optional[List[str]] = Query(None, description="Filter by deployment type (can specify multiple)"),
+        affected_product: Optional[List[str]] = Query(None,
+                                                      description="Filter by affected product (can specify multiple)"),
+        confidence: Optional[List[str]] = Query(None, description="Filter by confidence level (can specify multiple)"),
+        performance_impact: Optional[List[str]] = Query(None,
+                                                        description="Filter by performance impact (can specify multiple)"),
+        enabled: Optional[List[str]] = Query(None,
+                                             description="Filter by enabled status (true/false, can specify multiple)"),
+        sort_by: Optional[str] = Query("msg", description="Sort by field (sid, msg)"),
+        sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)")
 ):
     """
     Get rules with optional filtering, sorting, and pagination

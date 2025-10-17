@@ -2,14 +2,9 @@
 Simple startup script for the Suricata Rule Browser
 """
 import uvicorn
-import sys
-from pathlib import Path
 
-# Add backend directory to Python path
-backend_dir = Path(__file__).parent / "backend"
-sys.path.insert(0, str(backend_dir))
 
-if __name__ == "__main__":
+def main():
     print("=" * 60)
     print("Starting Suricata Rule Browser")
     print("=" * 60)
@@ -25,3 +20,7 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
+
+
+if __name__ == "__main__":
+    main()

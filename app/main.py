@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown: Add cleanup code here if needed
 
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Suricata Rule Browser",
@@ -35,21 +36,25 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 app.include_router(rules.router, prefix="/api/v1", tags=["rules"])
 app.include_router(transforms.router, prefix="/api/v1", tags=["transforms"])
 
+
 # Page endpoints
 @app.get("/")
 async def browser_page(request: Request):
     """Render the rules browser page"""
     return templates.TemplateResponse("browser.html", {"request": request, "active_page": "browser"})
 
+
 @app.get("/transforms")
 async def transforms_page(request: Request):
     """Render the transforms page"""
     return templates.TemplateResponse("transforms.html", {"request": request, "active_page": "transforms"})
 
+
 @app.get("/about")
 async def about_page(request: Request):
     """Render the about page"""
     return templates.TemplateResponse("about.html", {"request": request, "active_page": "about"})
+
 
 @app.get("/health")
 async def health_check():

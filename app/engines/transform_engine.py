@@ -13,8 +13,8 @@ class TransformEngine:
 
     @staticmethod
     def preview_transform(
-        rules: List[SuricataRule],
-        transform: TransformRule
+            rules: List[SuricataRule],
+            transform: TransformRule
     ) -> DryRunResult:
         """
         Preview what rules would be affected by a transform without modifying them
@@ -73,8 +73,8 @@ class TransformEngine:
 
     @staticmethod
     def apply_transform(
-        rule: SuricataRule,
-        transform: TransformRule
+            rule: SuricataRule,
+            transform: TransformRule
     ) -> SuricataRule:
         """
         Apply transform actions to a rule (for future implementation)

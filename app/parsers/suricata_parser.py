@@ -65,7 +65,8 @@ class SuricataRuleParser:
         return metadata
 
     @classmethod
-    def parse_rule(cls, rule_text: str, source: Optional[str] = None, source_file: Optional[str] = None) -> Optional[SuricataRule]:
+    def parse_rule(cls, rule_text: str, source: Optional[str] = None, source_file: Optional[str] = None) -> Optional[
+        SuricataRule]:
         """
         Parse a single Suricata rule using suricataparser library
 
@@ -89,7 +90,8 @@ class SuricataRuleParser:
             # Check if this is a commented out rule or just a regular comment
             # A commented out rule will start with # followed by alert/drop/reject/pass
             uncommented = rule_text.lstrip('#').strip()
-            if not uncommented or not any(uncommented.startswith(action) for action in ['alert', 'drop', 'reject', 'pass']):
+            if not uncommented or not any(
+                    uncommented.startswith(action) for action in ['alert', 'drop', 'reject', 'pass']):
                 # This is a regular comment, not a disabled rule
                 return None
             # This is a disabled rule, parse it
@@ -150,7 +152,8 @@ class SuricataRuleParser:
             # Extract commonly used fields (use built-in attributes when available)
             sid = parsed.sid if hasattr(parsed, 'sid') and parsed.sid else None
             msg = parsed.msg if hasattr(parsed, 'msg') and parsed.msg else options.get('msg', '')
-            classtype = parsed.classtype if hasattr(parsed, 'classtype') and parsed.classtype else options.get('classtype', None)
+            classtype = parsed.classtype if hasattr(parsed, 'classtype') and parsed.classtype else options.get(
+                'classtype', None)
             rev = parsed.rev if hasattr(parsed, 'rev') and parsed.rev else None
 
             # Priority needs to be extracted from options
@@ -277,7 +280,8 @@ class SuricataRuleParser:
         return rules
 
     @classmethod
-    def parse_directory(cls, directory_path: Path, source: Optional[str] = None, exclude_subdirs: bool = False) -> List[SuricataRule]:
+    def parse_directory(cls, directory_path: Path, source: Optional[str] = None, exclude_subdirs: bool = False) -> List[
+        SuricataRule]:
         """
         Parse all .rules files in a directory
 
