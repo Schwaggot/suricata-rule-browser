@@ -462,6 +462,32 @@ header h1 {
     color: var(--text-primary);
     border-bottom: 2px solid var(--border-color);
     white-space: nowrap;
+    position: relative;
+}
+
+.rules-table th.resizable {
+    position: relative;
+}
+
+.resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 10;
+}
+
+.resize-handle:hover {
+    background-color: var(--primary-color);
+    opacity: 0.5;
+}
+
+.resizing {
+    cursor: col-resize;
+    user-select: none;
 }
 
 .rules-table th.sortable {

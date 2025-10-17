@@ -11,6 +11,12 @@ let currentSort = { field: 'msg', order: 'asc' };
 // Store Choices.js instances for all filter dropdowns
 let choicesInstances = {};
 
+// Column resize state
+let resizingColumn = null;
+let startX = 0;
+let startWidth = 0;
+let columnWidths = {};
+
 // Column order (must match the order in createRuleRow)
 const columnOrder = [
     'sid', 'action', 'protocol', 'message', 'source', 'category', 'classtype',
@@ -51,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rulesTable = document.getElementById('rules-table');
     if (rulesTable) {
         initializeColumnVisibility();
+        initializeColumnResize();
         initializeChoices();
         initializeEventListeners();
         updateSortIndicators(); // Show default sort indicator
@@ -140,6 +147,86 @@ function applyColumnVisibility() {
                 cells[index].style.display = visibleColumns[column] ? '' : 'none';
             }
         });
+    });
+}
+
+// Initialize column resize functionality
+function initializeColumnResize() {
+    // Load saved column widths from localStorage
+    const saved = localStorage.getItem('columnWidths');
+    if (saved) {
+        columnWidths = JSON.parse(saved);
+        applyColumnWidths();
+    }
+
+    // Add event listeners to all resize handles
+    const resizeHandles = document.querySelectorAll('.resize-handle');
+    resizeHandles.forEach(handle => {
+        handle.addEventListener('mousedown', startResize);
+        // Prevent clicks on resize handle from triggering sort
+        handle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        });
+    });
+
+    // Global mouse events for resizing
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
+}
+
+// Start resizing a column
+function startResize(e) {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent sorting when resizing
+    e.stopImmediatePropagation(); // Also prevent other listeners
+
+    resizingColumn = e.target.parentElement;
+    startX = e.pageX;
+    startWidth = resizingColumn.offsetWidth;
+
+    document.body.classList.add('resizing');
+}
+
+// Perform the resize
+function doResize(e) {
+    if (!resizingColumn) return;
+
+    const diff = e.pageX - startX;
+    const newWidth = Math.max(50, startWidth + diff); // Minimum width of 50px
+
+    resizingColumn.style.width = newWidth + 'px';
+    resizingColumn.style.minWidth = newWidth + 'px';
+    resizingColumn.style.maxWidth = newWidth + 'px';
+}
+
+// Stop resizing and save the width
+function stopResize() {
+    if (!resizingColumn) return;
+
+    // Save the new width
+    const column = resizingColumn.getAttribute('data-column');
+    if (column) {
+        columnWidths[column] = resizingColumn.offsetWidth;
+        localStorage.setItem('columnWidths', JSON.stringify(columnWidths));
+    }
+
+    resizingColumn = null;
+    document.body.classList.remove('resizing');
+}
+
+// Apply saved column widths
+function applyColumnWidths() {
+    const headers = document.querySelectorAll('thead th[data-column]');
+    headers.forEach(th => {
+        const column = th.getAttribute('data-column');
+        if (column && columnWidths[column]) {
+            const width = columnWidths[column];
+            th.style.width = width + 'px';
+            th.style.minWidth = width + 'px';
+            th.style.maxWidth = width + 'px';
+        }
     });
 }
 
