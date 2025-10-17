@@ -1206,13 +1206,20 @@ function formatRawRule(rawRule) {
 function updatePagination(data) {
     totalPages = Math.ceil(data.total / data.page_size);
 
+    // Calculate result range
+    const startResult = data.total === 0 ? 0 : ((data.page - 1) * data.page_size) + 1;
+    const endResult = Math.min(data.page * data.page_size, data.total);
+    const resultRangeText = `${startResult}-${endResult} / ${data.total.toLocaleString()}`;
+
     // Update top pagination
+    document.getElementById('result-range-top').textContent = resultRangeText;
     document.getElementById('page-input-top').value = data.page;
     document.getElementById('total-pages-top').textContent = totalPages;
     document.getElementById('prev-page-top').disabled = data.page <= 1;
     document.getElementById('next-page-top').disabled = data.page >= totalPages;
 
     // Update bottom pagination
+    document.getElementById('result-range-bottom').textContent = resultRangeText;
     document.getElementById('page-input-bottom').value = data.page;
     document.getElementById('total-pages-bottom').textContent = totalPages;
     document.getElementById('prev-page-bottom').disabled = data.page <= 1;
