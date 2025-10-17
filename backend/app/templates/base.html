@@ -12,19 +12,13 @@
 <body>
     <div class="container">
         <header>
-            <div class="header-content">
-                <div>
-                    <h1>Suricata Rule Browser</h1>
-                    <p class="subtitle">Browse and search Suricata IDS rules</p>
-                </div>
-                <button id="theme-toggle" class="theme-toggle" title="Toggle dark/light mode">
-                    <span class="theme-icon">🌙</span>
-                </button>
-            </div>
             <nav class="main-nav">
                 <a href="/" class="nav-link {% if active_page == 'browser' %}active{% endif %}">Rules Browser</a>
                 <a href="/transforms" class="nav-link {% if active_page == 'transforms' %}active{% endif %}">Rule Transforms</a>
                 <a href="/about" class="nav-link {% if active_page == 'about' %}active{% endif %}">About</a>
+                <button id="theme-toggle" class="theme-toggle" title="Toggle dark/light mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
             </nav>
         </header>
 

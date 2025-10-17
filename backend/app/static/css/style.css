@@ -70,9 +70,7 @@ header h1 {
 .main-nav {
     display: flex;
     gap: 20px;
-    margin-top: 20px;
     padding: 15px 0;
-    border-top: 1px solid var(--border-color);
     justify-content: center;
 }
 
