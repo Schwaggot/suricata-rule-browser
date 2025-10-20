@@ -14,7 +14,7 @@ sources:
     url: https://rules.emergingthreats.net/open/suricata-7.0/emerging.rules.tar.gz
     file_type: tar.gz
     cache_hours: 24
-    enabled: true
+    enabled: false
 
   # Stamus Networks Free Ruleset
   - name: stamus
@@ -73,3 +73,9 @@ sources:
     path: data/rules
     enabled: false
     exclude_subdirs: true  # Don't load rules from subdirectories (those are from downloaded sources)
+
+  - name: et-pro
+    type: directory
+    path: data/rules/et-pro
+    description: Local ET Pro Ruleset
+    enabled: true

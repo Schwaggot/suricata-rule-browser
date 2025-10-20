@@ -1,9 +1,10 @@
 """
 API endpoints for Suricata rules
 """
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Request
 from typing import Optional, List
 from pathlib import Path
+from collections import defaultdict
 
 from app.models.rule import SuricataRule, RuleFilter, RuleResponse, RuleAction
 from app.parsers.suricata_parser import SuricataRuleParser
@@ -92,6 +93,7 @@ def load_rules():
 
 @router.get("/rules", response_model=RuleResponse)
 async def get_rules(
+        request: Request,
         page: int = Query(1, ge=1, description="Page number"),
         page_size: int = Query(50, ge=1, le=1000, description="Number of rules per page"),
         search: Optional[str] = Query(None, description="Search in message, SID, and content"),
@@ -102,15 +104,6 @@ async def get_rules(
         sid: Optional[int] = Query(None, description="Filter by specific SID"),
         source: Optional[List[str]] = Query(None, description="Filter by rule source (can specify multiple)"),
         category: Optional[List[str]] = Query(None, description="Filter by rule category (can specify multiple)"),
-        signature_severity: Optional[List[str]] = Query(None,
-                                                        description="Filter by signature severity (can specify multiple)"),
-        attack_target: Optional[List[str]] = Query(None, description="Filter by attack target (can specify multiple)"),
-        deployment: Optional[List[str]] = Query(None, description="Filter by deployment type (can specify multiple)"),
-        affected_product: Optional[List[str]] = Query(None,
-                                                      description="Filter by affected product (can specify multiple)"),
-        confidence: Optional[List[str]] = Query(None, description="Filter by confidence level (can specify multiple)"),
-        performance_impact: Optional[List[str]] = Query(None,
-                                                        description="Filter by performance impact (can specify multiple)"),
         enabled: Optional[List[str]] = Query(None,
                                              description="Filter by enabled status (true/false, can specify multiple)"),
         sort_by: Optional[str] = Query("msg", description="Sort by field (sid, msg)"),
@@ -134,6 +127,20 @@ async def get_rules(
     # Ensure rules are loaded
     if not _rules_loaded:
         load_rules()
+
+    # Extract all query params
+    query_params = dict(request.query_params)
+
+    # Define known filters (the ones already handled explicitly above)
+    known_fields = {
+        "page", "page_size", "search", "action", "protocol", "classtype",
+        "sid", "source", "category", "enabled", "sort_by", "sort_order"
+    }
+
+    # Separate dynamic metadata filters (everything not explicitly declared)
+    metadata_filters = {
+        key: value for key, value in query_params.items() if key not in known_fields
+    }
 
     # Start with all rules
     filtered_rules = _rules_cache.copy()
@@ -181,54 +188,21 @@ async def get_rules(
                (not rule.category and "(unset)" in category)
         ]
 
-    if signature_severity:
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if rule.signature_severity in signature_severity or
-               (not rule.signature_severity and "(unset)" in signature_severity)
-        ]
-
-    if attack_target:
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if rule.attack_target in attack_target or
-               (not rule.attack_target and "(unset)" in attack_target)
-        ]
-
-    if deployment:
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if rule.deployment in deployment or
-               (not rule.deployment and "(unset)" in deployment)
-        ]
-
-    if affected_product:
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if rule.affected_product in affected_product or
-               (not rule.affected_product and "(unset)" in affected_product)
-        ]
-
-    if confidence:
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if rule.confidence in confidence or
-               (not rule.confidence and "(unset)" in confidence)
-        ]
-
-    if performance_impact:
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if rule.performance_impact in performance_impact or
-               (not rule.performance_impact and "(unset)" in performance_impact)
-        ]
-
     if enabled:
         # Convert string values to boolean
         enabled_bool = [e.lower() == 'true' for e in enabled]
         filtered_rules = [
             rule for rule in filtered_rules
             if rule.enabled in enabled_bool
+        ]
+
+    if metadata_filters:
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if all(
+                str(rule.metadata.get(k, "")).lower() == str(v).lower()
+                for k, v in metadata_filters.items()
+            )
         ]
 
     # Sort rules
@@ -244,12 +218,7 @@ async def get_rules(
         "source": lambda r: (r.source or "").lower(),
         "category": lambda r: (r.category or "").lower(),
         "classtype": lambda r: (r.classtype or "").lower(),
-        "severity": lambda r: (r.signature_severity or "").lower(),
-        "attack_target": lambda r: (r.attack_target or "").lower(),
-        "deployment": lambda r: (r.deployment or "").lower(),
-        "affected_product": lambda r: (r.affected_product or "").lower(),
-        "confidence": lambda r: (r.confidence or "").lower(),
-        "performance": lambda r: (r.performance_impact or "").lower(),
+        "severity": lambda r: (r.signature_severity or "").lower(),        
         "rev": lambda r: r.rev if r.rev is not None else 0,
     }
 
@@ -300,14 +269,9 @@ async def get_stats():
     protocols = {}
     classtypes = {}
     sources = {}
-    categories = {}
-    signature_severities = {}
-    attack_targets = {}
-    deployments = {}
-    affected_products = {}
-    confidences = {}
-    performance_impacts = {}
+    categories = {}    
     enabled_status = {}
+    metadata = defaultdict(lambda: defaultdict(int))
 
     for rule in _rules_cache:
         # Count actions
@@ -328,28 +292,17 @@ async def get_stats():
         category_key = rule.category if rule.category else "(unset)"
         categories[category_key] = categories.get(category_key, 0) + 1
 
-        # Count metadata-based filters
-        severity_key = rule.signature_severity if rule.signature_severity else "(unset)"
-        signature_severities[severity_key] = signature_severities.get(severity_key, 0) + 1
-
-        target_key = rule.attack_target if rule.attack_target else "(unset)"
-        attack_targets[target_key] = attack_targets.get(target_key, 0) + 1
-
-        deployment_key = rule.deployment if rule.deployment else "(unset)"
-        deployments[deployment_key] = deployments.get(deployment_key, 0) + 1
-
-        product_key = rule.affected_product if rule.affected_product else "(unset)"
-        affected_products[product_key] = affected_products.get(product_key, 0) + 1
-
-        confidence_key = rule.confidence if rule.confidence else "(unset)"
-        confidences[confidence_key] = confidences.get(confidence_key, 0) + 1
-
-        performance_key = rule.performance_impact if rule.performance_impact else "(unset)"
-        performance_impacts[performance_key] = performance_impacts.get(performance_key, 0) + 1
-
         # Count enabled status
         enabled_key = "true" if rule.enabled else "false"
         enabled_status[enabled_key] = enabled_status.get(enabled_key, 0) + 1
+
+        # Dynamically count all occuring metadata fields
+        for key, value in rule.metadata.items():
+            if isinstance(value, list):
+                for item in value:
+                    metadata[key][item] += 1
+            else:
+                metadata[key][value] += 1
 
     return {
         "total_rules": total_rules,
@@ -358,13 +311,8 @@ async def get_stats():
         "classtypes": classtypes,
         "sources": sources,
         "categories": categories,
-        "signature_severities": signature_severities,
-        "attack_targets": attack_targets,
-        "deployments": deployments,
-        "affected_products": affected_products,
-        "confidences": confidences,
-        "performance_impacts": performance_impacts,
-        "enabled_status": enabled_status
+        "enabled_status": enabled_status,
+        "metadata": metadata
     }
 
 

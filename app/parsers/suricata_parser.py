@@ -192,16 +192,6 @@ class SuricataRuleParser:
             # Extract category from message
             category = cls.extract_category(msg)
 
-            # Extract metadata fields for filtering
-            signature_severity = metadata.get('signature_severity')
-            attack_target = metadata.get('attack_target')
-            deployment = metadata.get('deployment')
-            affected_product = metadata.get('affected_product')
-            confidence = metadata.get('confidence')
-            performance_impact = metadata.get('performance_impact')
-            created_at = metadata.get('created_at')
-            updated_at = metadata.get('updated_at')
-
             return SuricataRule(
                 id=sid,
                 action=RuleAction(action),
@@ -224,14 +214,6 @@ class SuricataRuleParser:
                 source_file=source_file,
                 enabled=enabled,
                 category=category,
-                signature_severity=signature_severity,
-                attack_target=attack_target,
-                deployment=deployment,
-                affected_product=affected_product,
-                confidence=confidence,
-                performance_impact=performance_impact,
-                created_at=created_at,
-                updated_at=updated_at
             )
 
         except Exception as e:

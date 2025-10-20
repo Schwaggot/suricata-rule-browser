@@ -19,9 +19,16 @@ let columnWidths = {};
 
 // Column order (must match the order in createRuleRow)
 const columnOrder = [
-    'sid', 'action', 'status', 'protocol', 'message', 'source', 'category', 'classtype',
-    'severity', 'attack_target', 'deployment', 'affected_product',
-    'confidence', 'performance', 'network', 'revision'
+    'sid', 
+    'action', 
+    'status', 
+    'protocol', 
+    'message', 
+    'source', 
+    'category', 
+    'classtype',
+    'network', 
+    'revision'
 ];
 
 // Column visibility state
@@ -33,13 +40,7 @@ let visibleColumns = {
     message: true,
     source: true,
     category: true,
-    classtype: true,
-    severity: false,
-    attack_target: false,
-    deployment: false,
-    affected_product: false,
-    confidence: false,
-    performance: false,
+    classtype: true,   
     network: true,
     revision: false
 };
@@ -238,13 +239,7 @@ function initializeChoices() {
         'protocol-filter',
         'source-filter',
         'category-filter',
-        'classtype-filter',
-        'severity-filter',
-        'attack-target-filter',
-        'deployment-filter',
-        'affected-product-filter',
-        'confidence-filter',
-        'performance-filter',
+        'classtype-filter',        
         'enabled-filter'
     ];
 
@@ -355,13 +350,7 @@ function initializeEventListeners() {
     document.getElementById('protocol-filter').addEventListener('change', handleFilterChange);
     document.getElementById('source-filter').addEventListener('change', handleFilterChange);
     document.getElementById('category-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('severity-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('attack-target-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('deployment-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('affected-product-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('confidence-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('performance-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);    
     document.getElementById('enabled-filter').addEventListener('change', handleFilterChange);
 
     // Pagination - Top
@@ -408,13 +397,7 @@ async function loadStats() {
         populateProtocolFilter(data.protocols);
         populateClasstypeFilter(data.classtypes);
         populateSourceFilter(data.sources);
-        populateCategoryFilter(data.categories);
-        populateSeverityFilter(data.signature_severities);
-        populateAttackTargetFilter(data.attack_targets);
-        populateDeploymentFilter(data.deployments);
-        populateAffectedProductFilter(data.affected_products);
-        populateConfidenceFilter(data.confidences);
-        populatePerformanceFilter(data.performance_impacts);
+        populateCategoryFilter(data.categories);        
         populateEnabledFilter(data.enabled_status);
     } catch (error) {
         console.error('Error loading stats:', error);
@@ -502,138 +485,6 @@ function populateCategoryFilter(categories) {
 
     if (choicesInstances['category-filter']) {
         choicesInstances['category-filter'].setChoices(choices, 'value', 'label', true);
-    }
-}
-
-// Populate severity filter dropdown
-function populateSeverityFilter(severities) {
-    if (!severities || Object.keys(severities).length === 0) {
-        return;
-    }
-
-    const sortedSeverities = Object.keys(severities).sort((a, b) => {
-        // Put "(unset)" at the end
-        if (a === "(unset)") return 1;
-        if (b === "(unset)") return -1;
-        return a.localeCompare(b);
-    });
-    const choices = sortedSeverities.map(severity => ({
-        value: severity,
-        label: `${severity} (${severities[severity]})`
-    }));
-
-    if (choicesInstances['severity-filter']) {
-        choicesInstances['severity-filter'].setChoices(choices, 'value', 'label', true);
-    }
-}
-
-// Populate attack target filter dropdown
-function populateAttackTargetFilter(targets) {
-    if (!targets || Object.keys(targets).length === 0) {
-        return;
-    }
-
-    const sortedTargets = Object.keys(targets).sort((a, b) => {
-        // Put "(unset)" at the end
-        if (a === "(unset)") return 1;
-        if (b === "(unset)") return -1;
-        return a.localeCompare(b);
-    });
-    const choices = sortedTargets.map(target => ({
-        value: target,
-        label: `${target} (${targets[target]})`
-    }));
-
-    if (choicesInstances['attack-target-filter']) {
-        choicesInstances['attack-target-filter'].setChoices(choices, 'value', 'label', true);
-    }
-}
-
-// Populate deployment filter dropdown
-function populateDeploymentFilter(deployments) {
-    if (!deployments || Object.keys(deployments).length === 0) {
-        return;
-    }
-
-    const sortedDeployments = Object.keys(deployments).sort((a, b) => {
-        // Put "(unset)" at the end
-        if (a === "(unset)") return 1;
-        if (b === "(unset)") return -1;
-        return a.localeCompare(b);
-    });
-    const choices = sortedDeployments.map(deployment => ({
-        value: deployment,
-        label: `${deployment} (${deployments[deployment]})`
-    }));
-
-    if (choicesInstances['deployment-filter']) {
-        choicesInstances['deployment-filter'].setChoices(choices, 'value', 'label', true);
-    }
-}
-
-// Populate affected product filter dropdown
-function populateAffectedProductFilter(products) {
-    if (!products || Object.keys(products).length === 0) {
-        return;
-    }
-
-    const sortedProducts = Object.keys(products).sort((a, b) => {
-        // Put "(unset)" at the end
-        if (a === "(unset)") return 1;
-        if (b === "(unset)") return -1;
-        return a.localeCompare(b);
-    });
-    const choices = sortedProducts.map(product => ({
-        value: product,
-        label: `${product} (${products[product]})`
-    }));
-
-    if (choicesInstances['affected-product-filter']) {
-        choicesInstances['affected-product-filter'].setChoices(choices, 'value', 'label', true);
-    }
-}
-
-// Populate confidence filter dropdown
-function populateConfidenceFilter(confidences) {
-    if (!confidences || Object.keys(confidences).length === 0) {
-        return;
-    }
-
-    const sortedConfidences = Object.keys(confidences).sort((a, b) => {
-        // Put "(unset)" at the end
-        if (a === "(unset)") return 1;
-        if (b === "(unset)") return -1;
-        return a.localeCompare(b);
-    });
-    const choices = sortedConfidences.map(confidence => ({
-        value: confidence,
-        label: `${confidence} (${confidences[confidence]})`
-    }));
-
-    if (choicesInstances['confidence-filter']) {
-        choicesInstances['confidence-filter'].setChoices(choices, 'value', 'label', true);
-    }
-}
-
-// Populate performance filter dropdown
-function populatePerformanceFilter(impacts) {
-    if (!impacts || Object.keys(impacts).length === 0) {
-        return;
-    }
-
-    const sortedImpacts = Object.keys(impacts).sort((a, b) => {
-        // Put "(unset)" at the end
-        if (a === "(unset)") return 1;
-        if (b === "(unset)") return -1;
-        return a.localeCompare(b);
-    });
-    const choices = sortedImpacts.map(impact => ({
-        value: impact,
-        label: `${impact} (${impacts[impact]})`
-    }));
-
-    if (choicesInstances['performance-filter']) {
-        choicesInstances['performance-filter'].setChoices(choices, 'value', 'label', true);
     }
 }
 
@@ -773,37 +624,7 @@ function buildQueryParams() {
     const category = choicesInstances['category-filter']?.getValue(true);
     if (category && category.length > 0) {
         category.forEach(val => params.append('category', val));
-    }
-
-    const severity = choicesInstances['severity-filter']?.getValue(true);
-    if (severity && severity.length > 0) {
-        severity.forEach(val => params.append('signature_severity', val));
-    }
-
-    const attackTarget = choicesInstances['attack-target-filter']?.getValue(true);
-    if (attackTarget && attackTarget.length > 0) {
-        attackTarget.forEach(val => params.append('attack_target', val));
-    }
-
-    const deployment = choicesInstances['deployment-filter']?.getValue(true);
-    if (deployment && deployment.length > 0) {
-        deployment.forEach(val => params.append('deployment', val));
-    }
-
-    const affectedProduct = choicesInstances['affected-product-filter']?.getValue(true);
-    if (affectedProduct && affectedProduct.length > 0) {
-        affectedProduct.forEach(val => params.append('affected_product', val));
-    }
-
-    const confidence = choicesInstances['confidence-filter']?.getValue(true);
-    if (confidence && confidence.length > 0) {
-        confidence.forEach(val => params.append('confidence', val));
-    }
-
-    const performance = choicesInstances['performance-filter']?.getValue(true);
-    if (performance && performance.length > 0) {
-        performance.forEach(val => params.append('performance_impact', val));
-    }
+    }    
 
     const enabled = choicesInstances['enabled-filter']?.getValue(true);
     if (enabled && enabled.length > 0) {
@@ -944,29 +765,7 @@ function createRuleRow(rule) {
     row.appendChild(categoryCell);
 
     // Class Type column
-    row.appendChild(createCell(rule.classtype));
-
-    // Severity column
-    row.appendChild(createCell(rule.signature_severity, '', true, 'badge-severity'));
-
-    // Attack Target column
-    row.appendChild(createCell(rule.attack_target));
-
-    // Deployment column
-    row.appendChild(createCell(rule.deployment));
-
-    // Affected Product column
-    const productCell = document.createElement('td');
-    productCell.className = 'product-cell';
-    productCell.textContent = rule.affected_product || '-';
-    productCell.title = rule.affected_product || '';
-    row.appendChild(productCell);
-
-    // Confidence column
-    row.appendChild(createCell(rule.confidence, '', true, 'badge-confidence'));
-
-    // Performance Impact column
-    row.appendChild(createCell(rule.performance_impact, '', true, 'badge-performance'));
+    row.appendChild(createCell(rule.classtype));    
 
     // Network column
     const networkCell = document.createElement('td');

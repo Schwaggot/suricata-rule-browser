@@ -16,17 +16,17 @@
 
 <div class="controls-section">
     <div class="search-box">
-        <input
-                type="text"
-                id="search-input"
-                placeholder="Search rules (message, SID, tags)..."
-                autocomplete="off"
-        >
+        <input type="text" id="search-input" placeholder="Search rules (message, SID, tags)..." autocomplete="off">
         <button id="search-btn" class="btn btn-primary">Search</button>
         <button id="clear-btn" class="btn btn-secondary">Clear</button>
     </div>
 
     <div class="filters">
+        <div class="filter-group">
+            <label for="enabled-filter">Status:</label>
+            <select id="enabled-filter" multiple></select>
+        </div>
+
         <div class="filter-group">
             <label for="action-filter">Action:</label>
             <select id="action-filter" multiple></select>
@@ -50,41 +50,6 @@
         <div class="filter-group">
             <label for="classtype-filter">Class Type:</label>
             <select id="classtype-filter" multiple></select>
-        </div>
-
-        <div class="filter-group">
-            <label for="severity-filter">Severity:</label>
-            <select id="severity-filter" multiple></select>
-        </div>
-
-        <div class="filter-group">
-            <label for="attack-target-filter">Attack Target:</label>
-            <select id="attack-target-filter" multiple></select>
-        </div>
-
-        <div class="filter-group">
-            <label for="deployment-filter">Deployment:</label>
-            <select id="deployment-filter" multiple></select>
-        </div>
-
-        <div class="filter-group">
-            <label for="affected-product-filter">Affected Product:</label>
-            <select id="affected-product-filter" multiple></select>
-        </div>
-
-        <div class="filter-group">
-            <label for="confidence-filter">Confidence:</label>
-            <select id="confidence-filter" multiple></select>
-        </div>
-
-        <div class="filter-group">
-            <label for="performance-filter">Performance Impact:</label>
-            <select id="performance-filter" multiple></select>
-        </div>
-
-        <div class="filter-group">
-            <label for="enabled-filter">Status:</label>
-            <select id="enabled-filter" multiple></select>
         </div>
     </div>
 </div>
@@ -154,30 +119,6 @@
                     <span>Class Type</span>
                 </label>
                 <label class="column-option">
-                    <input type="checkbox" data-column="severity">
-                    <span>Severity</span>
-                </label>
-                <label class="column-option">
-                    <input type="checkbox" data-column="attack_target">
-                    <span>Attack Target</span>
-                </label>
-                <label class="column-option">
-                    <input type="checkbox" data-column="deployment">
-                    <span>Deployment</span>
-                </label>
-                <label class="column-option">
-                    <input type="checkbox" data-column="affected_product">
-                    <span>Affected Product</span>
-                </label>
-                <label class="column-option">
-                    <input type="checkbox" data-column="confidence">
-                    <span>Confidence</span>
-                </label>
-                <label class="column-option">
-                    <input type="checkbox" data-column="performance">
-                    <span>Performance Impact</span>
-                </label>
-                <label class="column-option">
                     <input type="checkbox" data-column="network" checked>
                     <span>Network</span>
                 </label>
@@ -192,71 +133,49 @@
     <div class="table-wrapper">
         <table id="rules-table" class="rules-table">
             <thead>
-            <tr>
-                <th data-column="sid" data-sort="sid" class="sortable resizable">SID <span
-                        class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="action" data-sort="action" class="sortable resizable">Action <span
-                        class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="status" data-sort="enabled" class="sortable resizable" style="display: none;">Status
-                    <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="protocol" data-sort="protocol" class="sortable resizable">Protocol <span
-                        class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="message" data-sort="msg" class="sortable resizable">Message <span
-                        class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="source" data-sort="source" class="sortable resizable">Source <span
-                        class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="category" data-sort="category" class="sortable resizable">Category <span
-                        class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="classtype" data-sort="classtype" class="sortable resizable">Class Type <span
-                        class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="severity" data-sort="severity" class="sortable resizable" style="display: none;">
-                    Severity <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="attack_target" data-sort="attack_target" class="sortable resizable"
-                    style="display: none;">Attack Target <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="deployment" data-sort="deployment" class="sortable resizable" style="display: none;">
-                    Deployment <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="affected_product" data-sort="affected_product" class="sortable resizable"
-                    style="display: none;">Affected Product <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="confidence" data-sort="confidence" class="sortable resizable" style="display: none;">
-                    Confidence <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="performance" data-sort="performance" class="sortable resizable" style="display: none;">
-                    Performance Impact <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="network" class="resizable">Network
-                    <div class="resize-handle"></div>
-                </th>
-                <th data-column="revision" data-sort="rev" class="sortable resizable" style="display: none;">Revision
-                    <span class="sort-indicator"></span>
-                    <div class="resize-handle"></div>
-                </th>
-            </tr>
+                <tr>
+                    <th data-column="sid" data-sort="sid" class="sortable resizable">SID <span
+                            class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="action" data-sort="action" class="sortable resizable">Action <span
+                            class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="status" data-sort="enabled" class="sortable resizable" style="display: none;">
+                        Status
+                        <span class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="protocol" data-sort="protocol" class="sortable resizable">Protocol <span
+                            class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="message" data-sort="msg" class="sortable resizable">Message <span
+                            class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="source" data-sort="source" class="sortable resizable">Source <span
+                            class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="category" data-sort="category" class="sortable resizable">Category <span
+                            class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="classtype" data-sort="classtype" class="sortable resizable">Class Type <span
+                            class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="network" class="resizable">Network
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="revision" data-sort="rev" class="sortable resizable" style="display: none;">
+                        Revision
+                        <span class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                </tr>
             </thead>
             <tbody id="rules-list"></tbody>
         </table>
