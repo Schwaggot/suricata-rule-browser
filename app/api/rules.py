@@ -197,11 +197,19 @@ async def get_rules(
         ]
 
     if metadata_filters:
+        # Convert query params to support multiple values for the same key
+        metadata_multi = defaultdict(list)
+        for key in metadata_filters.keys():
+            # Get all values for this metadata key (handles multiple selections)
+            all_values = request.query_params.getlist(key)
+            metadata_multi[key] = [v.lower() for v in all_values]
+
+        # Filter rules: a rule matches if for each metadata key, its value is in the selected values
         filtered_rules = [
             rule for rule in filtered_rules
             if all(
-                str(rule.metadata.get(k, "")).lower() == str(v).lower()
-                for k, v in metadata_filters.items()
+                str(rule.metadata.get(k, "")).lower() in values
+                for k, values in metadata_multi.items()
             )
         ]
 

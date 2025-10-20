@@ -303,6 +303,20 @@ function initializeEventListeners() {
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
+    // Metadata filters toggle
+    const metadataToggleBtn = document.getElementById('metadata-filters-toggle');
+    const metadataContainer = document.getElementById('metadata-filters-container');
+    if (metadataToggleBtn && metadataContainer) {
+        metadataToggleBtn.addEventListener('click', () => {
+            const isVisible = metadataContainer.style.display === 'block';
+            metadataContainer.style.display = isVisible ? 'none' : 'block';
+            const toggleIcon = metadataToggleBtn.querySelector('.toggle-icon');
+            if (toggleIcon) {
+                toggleIcon.textContent = isVisible ? '▶' : '▼';
+            }
+        });
+    }
+
     // Column visibility toggle
     const columnToggleBtn = document.getElementById('column-toggle-btn');
     const columnDropdown = document.getElementById('column-dropdown');
@@ -397,8 +411,13 @@ async function loadStats() {
         populateProtocolFilter(data.protocols);
         populateClasstypeFilter(data.classtypes);
         populateSourceFilter(data.sources);
-        populateCategoryFilter(data.categories);        
+        populateCategoryFilter(data.categories);
         populateEnabledFilter(data.enabled_status);
+
+        // Populate dynamic metadata filters
+        if (data.metadata) {
+            populateMetadataFilters(data.metadata);
+        }
     } catch (error) {
         console.error('Error loading stats:', error);
     }
@@ -504,6 +523,112 @@ function populateEnabledFilter(enabledStatus) {
     }
 }
 
+// Populate dynamic metadata filters
+function populateMetadataFilters(metadata) {
+    const container = document.getElementById('metadata-filters-container');
+    if (!container) return;
+
+    // Clear existing metadata filters
+    container.innerHTML = '';
+
+    // Sort metadata keys alphabetically
+    const sortedKeys = Object.keys(metadata).sort();
+
+    sortedKeys.forEach(key => {
+        const values = metadata[key];
+
+        // Skip if no values
+        if (!values || Object.keys(values).length === 0) {
+            return;
+        }
+
+        // Create filter group
+        const filterGroup = document.createElement('div');
+        filterGroup.className = 'filter-group';
+
+        // Create label with clear button
+        const label = document.createElement('label');
+        label.setAttribute('for', `metadata-${key}-filter`);
+        label.style.display = 'flex';
+        label.style.justifyContent = 'space-between';
+        label.style.alignItems = 'center';
+
+        // Use the literal field name without any formatting
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = `${key}:`;
+        label.appendChild(labelSpan);
+
+        // Create select element
+        const select = document.createElement('select');
+        select.id = `metadata-${key}-filter`;
+        select.setAttribute('multiple', '');
+        select.dataset.metadataKey = key;
+
+        // Append elements
+        filterGroup.appendChild(label);
+        filterGroup.appendChild(select);
+        container.appendChild(filterGroup);
+
+        // Initialize Choices.js for this select
+        const choices = new Choices(select, {
+            removeItemButton: true,
+            searchEnabled: true,
+            searchPlaceholderValue: 'Search...',
+            placeholder: true,
+            placeholderValue: 'Select options',
+            itemSelectText: '',
+            shouldSort: false,
+            searchResultLimit: 100,
+            noResultsText: 'No options found',
+            noChoicesText: 'No options available',
+            searchFields: ['label', 'value'],
+            searchFloor: 1,
+            fuseOptions: {
+                includeScore: true,
+                threshold: 0.3,
+                distance: 1000,
+                ignoreLocation: true
+            }
+        });
+
+        // Store the Choices instance
+        choicesInstances[`metadata-${key}-filter`] = choices;
+
+        // Populate with values (sorted by count, then alphabetically)
+        const sortedValues = Object.entries(values).sort((a, b) => {
+            // Sort by count descending, then by name ascending
+            if (b[1] !== a[1]) {
+                return b[1] - a[1];
+            }
+            return a[0].localeCompare(b[0]);
+        });
+
+        const choiceOptions = sortedValues.map(([value, count]) => ({
+            value: value,
+            label: `${value} (${count})`
+        }));
+
+        choices.setChoices(choiceOptions, 'value', 'label', true);
+
+        // Add change event listener
+        select.addEventListener('change', handleFilterChange);
+
+        // Add clear button
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'filter-clear-btn';
+        clearBtn.innerHTML = '×';
+        clearBtn.title = 'Clear this filter';
+        clearBtn.type = 'button';
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            choices.removeActiveItems();
+            handleFilterChange();
+        });
+
+        label.appendChild(clearBtn);
+    });
+}
+
 // Handle search
 function handleSearch() {
     currentPage = 1;
@@ -576,15 +701,13 @@ function updateSortIndicators() {
 function clearFilters() {
     document.getElementById('search-input').value = '';
 
-    // Clear all Choices.js instances
+    // Clear all Choices.js instances (including dynamic metadata filters)
     Object.keys(choicesInstances).forEach(key => {
         if (choicesInstances[key]) {
             choicesInstances[key].removeActiveItems();
         }
     });
 
-    document.getElementById('sort-by').value = 'msg';
-    document.getElementById('sort-order').value = 'asc';
     currentPage = 1;
     currentFilters = {};
     loadRules();
@@ -624,12 +747,25 @@ function buildQueryParams() {
     const category = choicesInstances['category-filter']?.getValue(true);
     if (category && category.length > 0) {
         category.forEach(val => params.append('category', val));
-    }    
+    }
 
     const enabled = choicesInstances['enabled-filter']?.getValue(true);
     if (enabled && enabled.length > 0) {
         enabled.forEach(val => params.append('enabled', val));
     }
+
+    // Add dynamic metadata filters
+    Object.keys(choicesInstances).forEach(key => {
+        if (key.startsWith('metadata-')) {
+            const metadataKey = key.replace('metadata-', '').replace('-filter', '');
+            const values = choicesInstances[key]?.getValue(true);
+            if (values && values.length > 0) {
+                // For metadata filters, we only support single value selection for now
+                // because the backend expects exact matches
+                values.forEach(val => params.append(metadataKey, val));
+            }
+        }
+    });
 
     // Use current sort state (from header clicks or dropdown)
     params.append('sort_by', currentSort.field);

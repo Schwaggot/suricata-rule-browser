@@ -1237,3 +1237,37 @@ header h1 {
         flex-direction: column;
     }
 }
+
+/* Metadata filters toggle */
+.metadata-filters-toggle {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.metadata-filters-toggle:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+.metadata-filters-toggle .toggle-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 0.8rem;
+}
+
+.metadata-filters {
+    margin-top: 0;
+}
