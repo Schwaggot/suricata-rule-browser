@@ -208,3 +208,6 @@ __marimo__/
 
 # locally downloaded IDS rules
 data/
+
+# AI Agents
+.claude/

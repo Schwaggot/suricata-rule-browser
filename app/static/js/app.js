@@ -317,6 +317,9 @@ function initializeEventListeners() {
         });
     }
 
+    // Update metadata filter summary whenever filters change
+    updateMetadataFilterSummary();
+
     // Column visibility toggle
     const columnToggleBtn = document.getElementById('column-toggle-btn');
     const columnDropdown = document.getElementById('column-dropdown');
@@ -523,6 +526,33 @@ function populateEnabledFilter(enabledStatus) {
     }
 }
 
+// Update metadata filter summary
+function updateMetadataFilterSummary() {
+    const summarySpan = document.getElementById('metadata-filter-summary');
+    if (!summarySpan) return;
+
+    // Collect all selected metadata filters
+    const selectedFilters = [];
+
+    Object.keys(choicesInstances).forEach(key => {
+        if (key.startsWith('metadata-')) {
+            const metadataKey = key.replace('metadata-', '').replace('-filter', '');
+            const values = choicesInstances[key]?.getValue(true);
+            if (values && values.length > 0) {
+                // Format as "key: value1, value2"
+                selectedFilters.push(`${metadataKey}: ${values.join(', ')}`);
+            }
+        }
+    });
+
+    // Update the summary text
+    if (selectedFilters.length > 0) {
+        summarySpan.textContent = ` (${selectedFilters.join('; ')})`;
+    } else {
+        summarySpan.textContent = '';
+    }
+}
+
 // Populate dynamic metadata filters
 function populateMetadataFilters(metadata) {
     const container = document.getElementById('metadata-filters-container');
@@ -594,8 +624,12 @@ function populateMetadataFilters(metadata) {
         // Store the Choices instance
         choicesInstances[`metadata-${key}-filter`] = choices;
 
-        // Populate with values (sorted by count, then alphabetically)
+        // Populate with values (sorted by count, then alphabetically, with "(unset)" at the end)
         const sortedValues = Object.entries(values).sort((a, b) => {
+            // Put "(unset)" at the end
+            if (a[0] === "(unset)") return 1;
+            if (b[0] === "(unset)") return -1;
+
             // Sort by count descending, then by name ascending
             if (b[1] !== a[1]) {
                 return b[1] - a[1];
@@ -611,7 +645,10 @@ function populateMetadataFilters(metadata) {
         choices.setChoices(choiceOptions, 'value', 'label', true);
 
         // Add change event listener
-        select.addEventListener('change', handleFilterChange);
+        select.addEventListener('change', () => {
+            updateMetadataFilterSummary();
+            handleFilterChange();
+        });
 
         // Add clear button
         const clearBtn = document.createElement('button');
@@ -622,6 +659,7 @@ function populateMetadataFilters(metadata) {
         clearBtn.addEventListener('click', (e) => {
             e.preventDefault();
             choices.removeActiveItems();
+            updateMetadataFilterSummary();
             handleFilterChange();
         });
 
@@ -707,6 +745,9 @@ function clearFilters() {
             choicesInstances[key].removeActiveItems();
         }
     });
+
+    // Update metadata filter summary
+    updateMetadataFilterSummary();
 
     currentPage = 1;
     currentFilters = {};

@@ -15,11 +15,12 @@ router = APIRouter()
 # In-memory cache for rules (loaded at startup)
 _rules_cache: List[SuricataRule] = []
 _rules_loaded = False
+_stats_cache = None
 
 
 def load_rules():
     """Load rules from configured sources (downloads and parses)"""
-    global _rules_cache, _rules_loaded
+    global _rules_cache, _rules_loaded, _stats_cache
 
     if _rules_loaded:
         return
@@ -89,6 +90,11 @@ def load_rules():
     print(f"  - {enabled_count} enabled")
     print(f"  - {disabled_count} disabled")
     print("=" * 60 + "\n")
+
+    # Compute and cache statistics
+    print("Computing statistics...")
+    _compute_stats()
+    print("Statistics cached.")
 
 
 @router.get("/rules", response_model=RuleResponse)
@@ -205,13 +211,28 @@ async def get_rules(
             metadata_multi[key] = [v.lower() for v in all_values]
 
         # Filter rules: a rule matches if for each metadata key, its value is in the selected values
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if all(
-                str(rule.metadata.get(k, "")).lower() in values
-                for k, values in metadata_multi.items()
-            )
-        ]
+        def matches_metadata_filter(rule):
+            for key, values in metadata_multi.items():
+                rule_value = str(rule.metadata.get(key, "")).lower()
+
+                # Check if rule has the metadata field
+                has_field = key in rule.metadata and rule.metadata.get(key)
+
+                # Check if "(unset)" is in the selected values
+                unset_selected = "(unset)" in values
+
+                if unset_selected and not has_field:
+                    # Rule doesn't have this field and "(unset)" is selected - matches
+                    continue
+                elif has_field and rule_value in values:
+                    # Rule has this field and value matches - matches
+                    continue
+                else:
+                    # No match for this metadata key
+                    return False
+            return True
+
+        filtered_rules = [rule for rule in filtered_rules if matches_metadata_filter(rule)]
 
     # Sort rules
     reverse = sort_order.lower() == "desc"
@@ -264,11 +285,9 @@ async def get_rule_by_sid(sid: int):
     raise HTTPException(status_code=404, detail=f"Rule with SID {sid} not found")
 
 
-@router.get("/stats")
-async def get_stats():
-    """Get statistics about the rules database"""
-    if not _rules_loaded:
-        load_rules()
+def _compute_stats():
+    """Compute and cache statistics about the rules database"""
+    global _stats_cache
 
     # Calculate statistics
     total_rules = len(_rules_cache)
@@ -277,7 +296,7 @@ async def get_stats():
     protocols = {}
     classtypes = {}
     sources = {}
-    categories = {}    
+    categories = {}
     enabled_status = {}
     metadata = defaultdict(lambda: defaultdict(int))
 
@@ -312,7 +331,13 @@ async def get_stats():
             else:
                 metadata[key][value] += 1
 
-    return {
+    # Count rules without each metadata field
+    for key in metadata.keys():
+        unset_count = sum(1 for rule in _rules_cache if key not in rule.metadata or not rule.metadata.get(key))
+        if unset_count > 0:
+            metadata[key]["(unset)"] = unset_count
+
+    _stats_cache = {
         "total_rules": total_rules,
         "actions": actions,
         "protocols": protocols,
@@ -324,13 +349,24 @@ async def get_stats():
     }
 
 
+@router.get("/stats")
+async def get_stats():
+    """Get statistics about the rules database"""
+    if not _rules_loaded:
+        load_rules()
+
+    # Return cached statistics
+    return _stats_cache
+
+
 @router.post("/reload")
 async def reload_rules():
     """Reload rules from disk (useful after adding new rule files)"""
-    global _rules_cache, _rules_loaded
+    global _rules_cache, _rules_loaded, _stats_cache
 
     _rules_cache = []
     _rules_loaded = False
+    _stats_cache = None
     load_rules()
 
     return {
