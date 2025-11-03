@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query, HTTPException, Request
 from typing import Optional, List
 from pathlib import Path
 from collections import defaultdict
+import re
 
 from app.models.rule import SuricataRule, RuleFilter, RuleResponse, RuleAction
 from app.parsers.suricata_parser import SuricataRuleParser
@@ -16,6 +17,44 @@ router = APIRouter()
 _rules_cache: List[SuricataRule] = []
 _rules_loaded = False
 _stats_cache = None
+
+
+def parse_search_query(query: str) -> List[str]:
+    """
+    Parse a search query to extract quoted phrases and unquoted terms.
+
+    Unquoted terms are split by spaces (OR logic - any term matches).
+    Quoted phrases are kept as exact strings.
+
+    Examples:
+        'malware' -> ['malware']
+        'class function' -> ['class', 'function'] (OR logic)
+        '"class function"' -> ['class function'] (exact phrase)
+        'malware "pcre:"' -> ['malware', 'pcre:'] (OR logic)
+        '"ET MALWARE" "sid:2"' -> ['ET MALWARE', 'sid:2'] (OR logic)
+        'alert drop "content:"' -> ['alert', 'drop', 'content:'] (OR logic)
+
+    Returns:
+        List of search terms (both quoted phrases and unquoted terms)
+    """
+    if not query:
+        return []
+
+    terms = []
+
+    # Find all quoted strings
+    quoted_pattern = r'"([^"]*)"'
+    quoted_matches = re.findall(quoted_pattern, query)
+    terms.extend(quoted_matches)
+
+    # Remove quoted strings from query to find unquoted terms
+    remaining = re.sub(quoted_pattern, '', query)
+
+    # Split remaining text by whitespace and filter out empty strings
+    unquoted_terms = [term.strip() for term in remaining.split() if term.strip()]
+    terms.extend(unquoted_terms)
+
+    return terms
 
 
 def load_rules():
@@ -155,19 +194,35 @@ async def get_rules(
 
     # Apply filters
     if search or raw_search:
+        def matches_standard_search(rule, search_terms):
+            """Check if rule matches ANY search term in msg, SID, or tags (OR logic)"""
+            for term in search_terms:
+                term_lower = term.lower()
+                if ((rule.msg and term_lower in rule.msg.lower()) or
+                    (rule.id and term_lower in str(rule.id)) or
+                    any(term_lower in tag for tag in rule.tags)):
+                    return True  # Found a match
+            return False  # No terms matched
+
+        def matches_raw_search(rule, raw_search_terms):
+            """Check if rule matches ANY search term in raw rule text (OR logic)"""
+            for term in raw_search_terms:
+                term_lower = term.lower()
+                if rule.raw_rule and term_lower in rule.raw_rule.lower():
+                    return True  # Found a match
+            return False  # No terms matched
+
         def matches_search_criteria(rule):
             # Standard search in msg, SID, and tags
             if search:
-                search_lower = search.lower()
-                if ((rule.msg and search_lower in rule.msg.lower()) or
-                    (rule.id and search_lower in str(rule.id)) or
-                    any(search_lower in tag for tag in rule.tags)):
+                search_terms = parse_search_query(search)
+                if matches_standard_search(rule, search_terms):
                     return True
 
             # Raw rule text search
             if raw_search:
-                raw_search_lower = raw_search.lower()
-                if rule.raw_rule and raw_search_lower in rule.raw_rule.lower():
+                raw_search_terms = parse_search_query(raw_search)
+                if matches_raw_search(rule, raw_search_terms):
                     return True
 
             return False
