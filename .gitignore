@@ -209,3 +209,5 @@ rules.yaml
 
 # AI Agents
 .claude/
+
+.DS_Store
