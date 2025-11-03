@@ -40,9 +40,10 @@ let visibleColumns = {
     message: true,
     source: true,
     category: true,
-    classtype: true,   
+    classtype: true,
     network: true,
-    revision: false
+    revision: false,
+    llm: true
 };
 
 // Initialize the application
@@ -239,8 +240,9 @@ function initializeChoices() {
         'protocol-filter',
         'source-filter',
         'category-filter',
-        'classtype-filter',        
-        'enabled-filter'
+        'classtype-filter',
+        'enabled-filter',
+        'llm-filter'
     ];
 
     filterIds.forEach(id => {
@@ -370,8 +372,9 @@ function initializeEventListeners() {
     document.getElementById('protocol-filter').addEventListener('change', handleFilterChange);
     document.getElementById('source-filter').addEventListener('change', handleFilterChange);
     document.getElementById('category-filter').addEventListener('change', handleFilterChange);
-    document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);    
+    document.getElementById('classtype-filter').addEventListener('change', handleFilterChange);
     document.getElementById('enabled-filter').addEventListener('change', handleFilterChange);
+    document.getElementById('llm-filter').addEventListener('change', handleFilterChange);
 
     // Pagination - Top
     document.getElementById('prev-page-top').addEventListener('click', () => changePage(-1));
@@ -419,6 +422,7 @@ async function loadStats() {
         populateSourceFilter(data.sources);
         populateCategoryFilter(data.categories);
         populateEnabledFilter(data.enabled_status);
+        populateLlmFilter(data.llm_status);
 
         // Populate dynamic metadata filters
         if (data.metadata) {
@@ -526,6 +530,22 @@ function populateEnabledFilter(enabledStatus) {
 
     if (choicesInstances['enabled-filter']) {
         choicesInstances['enabled-filter'].setChoices(choices, 'value', 'label', true);
+    }
+}
+
+// Populate LLM filter
+function populateLlmFilter(llmStatus) {
+    if (!llmStatus || Object.keys(llmStatus).length === 0) {
+        return;
+    }
+
+    const choices = [
+        { value: 'true', label: `Available (${llmStatus['true'] || 0})` },
+        { value: 'false', label: `Not Available (${llmStatus['false'] || 0})` }
+    ];
+
+    if (choicesInstances['llm-filter']) {
+        choicesInstances['llm-filter'].setChoices(choices, 'value', 'label', true);
     }
 }
 
@@ -802,6 +822,11 @@ function buildQueryParams() {
         enabled.forEach(val => params.append('enabled', val));
     }
 
+    const llm = choicesInstances['llm-filter']?.getValue(true);
+    if (llm && llm.length > 0) {
+        llm.forEach(val => params.append('llm_summary', val));
+    }
+
     // Add dynamic metadata filters
     Object.keys(choicesInstances).forEach(key => {
         if (key.startsWith('metadata-')) {
@@ -976,6 +1001,21 @@ function createRuleRow(rule) {
     // Revision column
     row.appendChild(createCell(rule.rev));
 
+    // LLM Summary column
+    const llmCell = document.createElement('td');
+    llmCell.className = 'llm-cell';
+    llmCell.style.textAlign = 'center';
+    if (rule.llm_summary_available) {
+        llmCell.textContent = '📖';
+        llmCell.title = 'LLM Summary Available';
+        if (rule.llm_summary_rev_mismatch) {
+            llmCell.title = `LLM Summary Available (rev ${rule.llm_summary_rev}, rule rev ${rule.rev})`;
+        }
+    } else {
+        llmCell.textContent = '-';
+    }
+    row.appendChild(llmCell);
+
     return row;
 }
 
@@ -1038,6 +1078,49 @@ function createTruncatedText(text, maxLength) {
     return container;
 }
 
+// Simple markdown to HTML renderer
+function renderMarkdown(markdown) {
+    if (!markdown) return '';
+
+    let html = markdown;
+
+    // Headers (##, ###)
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+    // Bold (**text** or __text__)
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+    // Italic (*text* or _text_)
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+
+    // Links [text](url)
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+    // Numbered lists
+    html = html.replace(/^\d+\.\s+(.*)$/gim, '<li>$1</li>');
+
+    // Bullet lists
+    html = html.replace(/^[-*]\s+(.*)$/gim, '<li>$1</li>');
+
+    // Wrap consecutive <li> tags in <ul> or <ol>
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, (match) => {
+        return '<ul>' + match + '</ul>';
+    });
+
+    // Paragraphs (double newlines)
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = '<p>' + html + '</p>';
+
+    // Single line breaks
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
+}
+
 // Show rule detail in modal
 function showRuleDetail(rule) {
     const modal = document.getElementById('rule-modal');
@@ -1067,7 +1150,35 @@ function showRuleDetail(rule) {
                 <div class="detail-value">${rule.rev || 'N/A'}</div>
             </div>
         </div>
+    `;
 
+    // LLM Summary section
+    if (rule.llm_summary_available && rule.llm_summary) {
+        let summaryHtml = `
+            <div class="detail-section" style="background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 1rem; margin: 1rem 0;">
+                <h3 style="margin-top: 0;">📖 LLM Summary</h3>
+        `;
+
+        // Add revision mismatch warning if needed
+        if (rule.llm_summary_rev_mismatch) {
+            summaryHtml += `
+                <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; margin-bottom: 1rem; border-radius: 4px;">
+                    ⚠️ <strong>Note:</strong> This summary is for revision ${rule.llm_summary_rev}, but the current rule is revision ${rule.rev}.
+                </div>
+            `;
+        }
+
+        summaryHtml += `
+                <div class="llm-summary-content">
+                    ${renderMarkdown(rule.llm_summary)}
+                </div>
+            </div>
+        `;
+
+        html += summaryHtml;
+    }
+
+    html += `
         <div class="detail-section">
             <h3>Network</h3>
             <div class="detail-grid">

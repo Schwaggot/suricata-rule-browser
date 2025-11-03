@@ -53,6 +53,11 @@
             <label for="classtype-filter">Class Type:</label>
             <select id="classtype-filter" multiple></select>
         </div>
+
+        <div class="filter-group">
+            <label for="llm-filter">LLM Summary:</label>
+            <select id="llm-filter" multiple></select>
+        </div>
     </div>
 
     <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
@@ -148,6 +153,10 @@
                     <input type="checkbox" data-column="revision">
                     <span>Revision</span>
                 </label>
+                <label class="column-option">
+                    <input type="checkbox" data-column="llm" checked>
+                    <span>LLM</span>
+                </label>
             </div>
         </div>
     </div>
@@ -195,6 +204,10 @@
                     <th data-column="revision" data-sort="rev" class="sortable resizable" style="display: none;">
                         Revision
                         <span class="sort-indicator"></span>
+                        <div class="resize-handle"></div>
+                    </th>
+                    <th data-column="llm" class="resizable" title="LLM Summary Available">
+                        LLM
                         <div class="resize-handle"></div>
                     </th>
                 </tr>

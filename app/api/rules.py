@@ -2,10 +2,11 @@
 API endpoints for Suricata rules
 """
 from fastapi import APIRouter, Query, HTTPException, Request
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pathlib import Path
 from collections import defaultdict
 import re
+import json
 
 from app.models.rule import SuricataRule, RuleFilter, RuleResponse, RuleAction
 from app.parsers.suricata_parser import SuricataRuleParser
@@ -17,6 +18,7 @@ router = APIRouter()
 _rules_cache: List[SuricataRule] = []
 _rules_loaded = False
 _stats_cache = None
+_llm_summaries: Dict[int, Dict[str, any]] = {}  # SID -> {markdown, name, doc_rev}
 
 
 def parse_search_query(query: str) -> tuple[List[str], List[str]]:
@@ -127,6 +129,50 @@ def format_search_logic(positive_terms: List[str], negative_terms: List[str]) ->
     return parts[0] if parts else ""
 
 
+def load_llm_summaries():
+    """Load LLM summaries from ids-docs.json"""
+    global _llm_summaries
+
+    docs_path = Path("ids-docs.json")
+    if not docs_path.exists():
+        print("⚠️  ids-docs.json not found, LLM summaries will not be available")
+        return
+
+    try:
+        with open(docs_path, 'r', encoding='utf-8') as f:
+            docs_data = json.load(f)
+
+        # Parse the reference array and index by SID
+        for ref in docs_data.get("reference", []):
+            ref_id = ref.get("id", "")
+            # Extract SID from format "sid-rev" (e.g., "2008719-5")
+            if "-" in ref_id:
+                sid_str, rev_str = ref_id.split("-", 1)
+                try:
+                    sid = int(sid_str)
+                    doc_rev = int(rev_str)
+
+                    # Get the English markdown content
+                    i18n = ref.get("i18n", {})
+                    en = i18n.get("en", {})
+                    markdown = en.get("markdown", "")
+                    name = en.get("name", "")
+
+                    if markdown:
+                        _llm_summaries[sid] = {
+                            "markdown": markdown,
+                            "name": name,
+                            "doc_rev": doc_rev
+                        }
+                except (ValueError, IndexError):
+                    continue
+
+        print(f"✓ Loaded {len(_llm_summaries)} LLM summaries from ids-docs.json")
+    except Exception as e:
+        print(f"⚠️  Error loading ids-docs.json: {e}")
+        _llm_summaries = {}
+
+
 def load_rules():
     """Load rules from configured sources (downloads and parses)"""
     global _rules_cache, _rules_loaded, _stats_cache
@@ -189,6 +235,23 @@ def load_rules():
     _rules_cache = all_rules
     _rules_loaded = True
 
+    # Load LLM summaries
+    load_llm_summaries()
+    total_summaries_loaded = len(_llm_summaries)
+
+    # Enrich rules with LLM summaries
+    enriched_count = 0
+    for rule in _rules_cache:
+        if rule.id and rule.id in _llm_summaries:
+            summary_data = _llm_summaries[rule.id]
+            rule.llm_summary = summary_data["markdown"]
+            rule.llm_summary_available = True
+            rule.llm_summary_rev = summary_data["doc_rev"]
+            # Check if revision matches
+            rule.llm_summary_rev_mismatch = (rule.rev is not None and
+                                             rule.rev != summary_data["doc_rev"])
+            enriched_count += 1
+
     # Count enabled and disabled rules
     enabled_count = sum(1 for rule in _rules_cache if rule.enabled)
     disabled_count = sum(1 for rule in _rules_cache if not rule.enabled)
@@ -198,6 +261,9 @@ def load_rules():
         f"Successfully loaded {len(_rules_cache)} rules from {len([s for s in downloader.sources if s.enabled])} sources")
     print(f"  - {enabled_count} enabled")
     print(f"  - {disabled_count} disabled")
+    if total_summaries_loaded > 0:
+        print(f"  - {enriched_count:,} rules matched with LLM summaries")
+        print(f"    ({total_summaries_loaded:,} total summaries loaded, {total_summaries_loaded - enriched_count:,} for rules not in current database)")
     print("=" * 60 + "\n")
 
     # Compute and cache statistics
@@ -222,6 +288,8 @@ async def get_rules(
         category: Optional[List[str]] = Query(None, description="Filter by rule category (can specify multiple)"),
         enabled: Optional[List[str]] = Query(None,
                                              description="Filter by enabled status (true/false, can specify multiple)"),
+        llm_summary: Optional[List[str]] = Query(None,
+                                                 description="Filter by LLM summary availability (true/false, can specify multiple)"),
         sort_by: Optional[str] = Query("msg", description="Sort by field (sid, msg)"),
         sort_order: Optional[str] = Query("asc", description="Sort order (asc or desc)")
 ):
@@ -238,6 +306,7 @@ async def get_rules(
     - **sid**: Filter by specific SID
     - **source**: Filter by rule source (e.g., 'et-open', 'stamus', 'local')
     - **category**: Filter by rule category (e.g., 'MALWARE', 'INFO', 'EXPLOIT')
+    - **llm_summary**: Filter by LLM summary availability (true/false)
     - **sort_by**: Field to sort by
     - **sort_order**: Sort order (asc or desc)
     """
@@ -251,7 +320,7 @@ async def get_rules(
     # Define known filters (the ones already handled explicitly above)
     known_fields = {
         "page", "page_size", "search", "raw_search", "action", "protocol", "classtype",
-        "sid", "source", "category", "enabled", "sort_by", "sort_order"
+        "sid", "source", "category", "enabled", "llm_summary", "sort_by", "sort_order"
     }
 
     # Separate dynamic metadata filters (everything not explicitly declared)
@@ -380,6 +449,14 @@ async def get_rules(
             if rule.enabled in enabled_bool
         ]
 
+    if llm_summary:
+        # Convert string values to boolean
+        llm_summary_bool = [s.lower() == 'true' for s in llm_summary]
+        filtered_rules = [
+            rule for rule in filtered_rules
+            if rule.llm_summary_available in llm_summary_bool
+        ]
+
     if metadata_filters:
         # Convert query params to support multiple values for the same key
         metadata_multi = defaultdict(list)
@@ -500,6 +577,7 @@ def _compute_stats():
     sources = {}
     categories = {}
     enabled_status = {}
+    llm_status = {}
     metadata = defaultdict(lambda: defaultdict(int))
 
     for rule in _rules_cache:
@@ -525,6 +603,10 @@ def _compute_stats():
         enabled_key = "true" if rule.enabled else "false"
         enabled_status[enabled_key] = enabled_status.get(enabled_key, 0) + 1
 
+        # Count LLM summary availability
+        llm_key = "true" if rule.llm_summary_available else "false"
+        llm_status[llm_key] = llm_status.get(llm_key, 0) + 1
+
         # Dynamically count all occuring metadata fields
         for key, value in rule.metadata.items():
             if isinstance(value, list):
@@ -547,6 +629,7 @@ def _compute_stats():
         "sources": sources,
         "categories": categories,
         "enabled_status": enabled_status,
+        "llm_status": llm_status,
         "metadata": metadata
     }
 

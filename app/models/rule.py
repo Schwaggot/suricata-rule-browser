@@ -52,6 +52,12 @@ class SuricataRule(BaseModel):
     # Category tracking (extracted from message prefix like "ET MALWARE", "ET INFO")
     category: Optional[str] = Field(None, description="Rule category (e.g., 'MALWARE', 'INFO', 'EXPLOIT')")
 
+    # LLM Summary from ids-docs.json
+    llm_summary: Optional[str] = Field(None, description="LLM-generated markdown summary from ids-docs.json")
+    llm_summary_available: bool = Field(False, description="Whether an LLM summary is available for this rule")
+    llm_summary_rev: Optional[int] = Field(None, description="Revision number from the documentation")
+    llm_summary_rev_mismatch: bool = Field(False, description="True if rule revision differs from docs revision")
+
     class Config:
         json_schema_extra = {
             "example": {
