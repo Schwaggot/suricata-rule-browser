@@ -839,11 +839,25 @@ async function loadRules() {
         displayRules(data);
         updatePagination(data);
         document.getElementById('filtered-rules').textContent = data.total;
+        updateSearchLogicDisplay(data.search_logic);
     } catch (error) {
         console.error('Error loading rules:', error);
         showError('Failed to load rules. Please try again.');
     } finally {
         hideLoading();
+    }
+}
+
+// Update search logic display
+function updateSearchLogicDisplay(searchLogic) {
+    const displayDiv = document.getElementById('search-logic-display');
+    const textSpan = document.getElementById('search-logic-text');
+
+    if (searchLogic) {
+        textSpan.textContent = searchLogic;
+        displayDiv.style.display = 'block';
+    } else {
+        displayDiv.style.display = 'none';
     }
 }
 

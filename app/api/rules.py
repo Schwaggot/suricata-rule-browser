@@ -19,42 +19,112 @@ _rules_loaded = False
 _stats_cache = None
 
 
-def parse_search_query(query: str) -> List[str]:
+def parse_search_query(query: str) -> tuple[List[str], List[str]]:
     """
-    Parse a search query to extract quoted phrases and unquoted terms.
+    Parse a search query to extract quoted phrases and unquoted terms,
+    separating positive and negative (prefixed with !) terms.
 
     Unquoted terms are split by spaces (OR logic - any term matches).
     Quoted phrases are kept as exact strings.
+    Terms prefixed with ! are negated (must NOT match).
+    Use \\! to search for a literal ! character.
 
     Examples:
-        'malware' -> ['malware']
-        'class function' -> ['class', 'function'] (OR logic)
-        '"class function"' -> ['class function'] (exact phrase)
-        'malware "pcre:"' -> ['malware', 'pcre:'] (OR logic)
-        '"ET MALWARE" "sid:2"' -> ['ET MALWARE', 'sid:2'] (OR logic)
-        'alert drop "content:"' -> ['alert', 'drop', 'content:'] (OR logic)
+        'malware' -> (['malware'], [])
+        'class function' -> (['class', 'function'], [])
+        '"class function"' -> (['class function'], [])
+        '!malware' -> ([], ['malware'])
+        'alert !malware' -> (['alert'], ['malware'])
+        '!malware !trojan' -> ([], ['malware', 'trojan'])
+        '!"ET MALWARE"' -> ([], ['ET MALWARE'])
+        'alert drop !malware !"pcre:"' -> (['alert', 'drop'], ['malware', 'pcre:'])
+        '\\!important' -> (['!important'], [])
 
     Returns:
-        List of search terms (both quoted phrases and unquoted terms)
+        Tuple of (positive_terms, negative_terms)
     """
     if not query:
-        return []
+        return ([], [])
 
-    terms = []
+    # Replace escaped exclamation marks with placeholder
+    ESCAPED_EXCLAMATION = '\x00ESCAPED_EXCLAMATION\x00'
+    query = query.replace('\\!', ESCAPED_EXCLAMATION)
 
-    # Find all quoted strings
-    quoted_pattern = r'"([^"]*)"'
+    positive_terms = []
+    negative_terms = []
+
+    # Find all quoted strings (including those with ! prefix)
+    # Pattern: optional !, then quoted string
+    quoted_pattern = r'(!?)"([^"]*)"'
     quoted_matches = re.findall(quoted_pattern, query)
-    terms.extend(quoted_matches)
+
+    for prefix, content in quoted_matches:
+        # Restore escaped exclamation marks
+        content = content.replace(ESCAPED_EXCLAMATION, '!')
+        if prefix == '!':
+            negative_terms.append(content)
+        else:
+            positive_terms.append(content)
 
     # Remove quoted strings from query to find unquoted terms
     remaining = re.sub(quoted_pattern, '', query)
 
     # Split remaining text by whitespace and filter out empty strings
     unquoted_terms = [term.strip() for term in remaining.split() if term.strip()]
-    terms.extend(unquoted_terms)
 
-    return terms
+    for term in unquoted_terms:
+        # Check for negation BEFORE restoring escaped exclamation marks
+        if term.startswith(ESCAPED_EXCLAMATION):
+            # Escaped exclamation mark - restore and treat as positive
+            term = term.replace(ESCAPED_EXCLAMATION, '!')
+            positive_terms.append(term)
+        elif term.startswith('!'):
+            # Negation - remove ! and add to negative terms
+            term = term[1:].replace(ESCAPED_EXCLAMATION, '!')
+            negative_terms.append(term)
+        else:
+            # Regular positive term
+            term = term.replace(ESCAPED_EXCLAMATION, '!')
+            positive_terms.append(term)
+
+    return (positive_terms, negative_terms)
+
+
+def format_search_logic(positive_terms: List[str], negative_terms: List[str]) -> str:
+    """
+    Format search terms into a human-readable logic expression.
+
+    Examples:
+        (['apple', 'orange'], []) -> '"apple" OR "orange"'
+        (['pcre'], ['malware', 'control']) -> '"pcre" AND NOT "malware" AND NOT "control"'
+        ([], ['malware', 'trojan']) -> 'NOT "malware" AND NOT "trojan"'
+        (['alert', 'drop'], ['malware']) -> '("alert" OR "drop") AND NOT "malware"'
+    """
+    if not positive_terms and not negative_terms:
+        return ""
+
+    parts = []
+
+    # Format positive terms (OR logic)
+    if positive_terms:
+        positive_str = " OR ".join(f'"{term}"' for term in positive_terms)
+        # Add parentheses if there are multiple positive terms AND negative terms
+        if len(positive_terms) > 1 and negative_terms:
+            positive_str = f"({positive_str})"
+        parts.append(positive_str)
+
+    # Format negative terms (AND NOT logic)
+    if negative_terms:
+        negative_strs = [f'NOT "{term}"' for term in negative_terms]
+        if parts:
+            # Already have positive terms, join with AND
+            parts.extend(negative_strs)
+            return " AND ".join(parts)
+        else:
+            # Only negative terms
+            return " AND ".join(negative_strs)
+
+    return parts[0] if parts else ""
 
 
 def load_rules():
@@ -194,38 +264,78 @@ async def get_rules(
 
     # Apply filters
     if search or raw_search:
-        def matches_standard_search(rule, search_terms):
-            """Check if rule matches ANY search term in msg, SID, or tags (OR logic)"""
-            for term in search_terms:
-                term_lower = term.lower()
-                if ((rule.msg and term_lower in rule.msg.lower()) or
+        def term_matches_in_standard_fields(rule, term):
+            """Check if a single term matches in msg, SID, or tags"""
+            term_lower = term.lower()
+            return ((rule.msg and term_lower in rule.msg.lower()) or
                     (rule.id and term_lower in str(rule.id)) or
-                    any(term_lower in tag for tag in rule.tags)):
-                    return True  # Found a match
-            return False  # No terms matched
+                    any(term_lower in tag for tag in rule.tags))
 
-        def matches_raw_search(rule, raw_search_terms):
-            """Check if rule matches ANY search term in raw rule text (OR logic)"""
-            for term in raw_search_terms:
-                term_lower = term.lower()
-                if rule.raw_rule and term_lower in rule.raw_rule.lower():
-                    return True  # Found a match
-            return False  # No terms matched
+        def term_matches_in_raw(rule, term):
+            """Check if a single term matches in raw rule text"""
+            term_lower = term.lower()
+            return rule.raw_rule and term_lower in rule.raw_rule.lower()
+
+        def matches_standard_search(rule, positive_terms, negative_terms):
+            """
+            Check if rule matches standard search criteria.
+            Positive terms: OR logic (match ANY)
+            Negative terms: AND logic (match NONE)
+            """
+            # Check positive terms (if any, at least one must match)
+            if positive_terms:
+                has_positive_match = any(term_matches_in_standard_fields(rule, term)
+                                        for term in positive_terms)
+                if not has_positive_match:
+                    return False
+
+            # Check negative terms (none should match)
+            if negative_terms:
+                has_negative_match = any(term_matches_in_standard_fields(rule, term)
+                                        for term in negative_terms)
+                if has_negative_match:
+                    return False
+
+            return True
+
+        def matches_raw_search(rule, positive_terms, negative_terms):
+            """
+            Check if rule matches raw text search criteria.
+            Positive terms: OR logic (match ANY)
+            Negative terms: AND logic (match NONE)
+            """
+            # Check positive terms (if any, at least one must match)
+            if positive_terms:
+                has_positive_match = any(term_matches_in_raw(rule, term)
+                                        for term in positive_terms)
+                if not has_positive_match:
+                    return False
+
+            # Check negative terms (none should match)
+            if negative_terms:
+                has_negative_match = any(term_matches_in_raw(rule, term)
+                                        for term in negative_terms)
+                if has_negative_match:
+                    return False
+
+            return True
 
         def matches_search_criteria(rule):
+            # Both search bars must match if provided (AND logic)
+
             # Standard search in msg, SID, and tags
             if search:
-                search_terms = parse_search_query(search)
-                if matches_standard_search(rule, search_terms):
-                    return True
+                positive_terms, negative_terms = parse_search_query(search)
+                if not matches_standard_search(rule, positive_terms, negative_terms):
+                    return False
 
             # Raw rule text search
             if raw_search:
-                raw_search_terms = parse_search_query(raw_search)
-                if matches_raw_search(rule, raw_search_terms):
-                    return True
+                positive_terms, negative_terms = parse_search_query(raw_search)
+                if not matches_raw_search(rule, positive_terms, negative_terms):
+                    return False
 
-            return False
+            return True
 
         filtered_rules = [rule for rule in filtered_rules if matches_search_criteria(rule)]
 
@@ -327,6 +437,29 @@ async def get_rules(
         filtered_rules.sort(key=sort_keys["msg"], reverse=reverse)
 
     # Calculate pagination
+    # Build search logic display
+    search_logic_parts = []
+
+    if search:
+        positive_terms, negative_terms = parse_search_query(search)
+        if positive_terms or negative_terms:
+            logic_str = format_search_logic(positive_terms, negative_terms)
+            search_logic_parts.append(f"Standard: {logic_str}")
+
+    if raw_search:
+        positive_terms, negative_terms = parse_search_query(raw_search)
+        if positive_terms or negative_terms:
+            logic_str = format_search_logic(positive_terms, negative_terms)
+            search_logic_parts.append(f"Raw Text: {logic_str}")
+
+    # Combine search logic parts with AND
+    search_logic = None
+    if search_logic_parts:
+        if len(search_logic_parts) == 1:
+            search_logic = search_logic_parts[0]
+        else:
+            search_logic = " AND ".join(f"({part})" for part in search_logic_parts)
+
     total = len(filtered_rules)
     start_idx = (page - 1) * page_size
     end_idx = start_idx + page_size
@@ -336,7 +469,8 @@ async def get_rules(
         total=total,
         rules=paginated_rules,
         page=page,
-        page_size=page_size
+        page_size=page_size,
+        search_logic=search_logic
     )
 
 

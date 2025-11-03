@@ -101,3 +101,4 @@ class RuleResponse(BaseModel):
     rules: List[SuricataRule] = Field(..., description="List of rules")
     page: int = Field(1, description="Current page number")
     page_size: int = Field(50, description="Number of rules per page")
+    search_logic: Optional[str] = Field(None, description="Human-readable search logic being applied")
