@@ -360,6 +360,9 @@ function initializeEventListeners() {
     document.getElementById('search-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleSearch();
     });
+    document.getElementById('raw-search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSearch();
+    });
     document.getElementById('clear-btn').addEventListener('click', clearFilters);
 
     // Filters
@@ -738,6 +741,7 @@ function updateSortIndicators() {
 // Clear all filters
 function clearFilters() {
     document.getElementById('search-input').value = '';
+    document.getElementById('raw-search-input').value = '';
 
     // Clear all Choices.js instances (including dynamic metadata filters)
     Object.keys(choicesInstances).forEach(key => {
@@ -763,6 +767,9 @@ function buildQueryParams() {
 
     const search = document.getElementById('search-input').value.trim();
     if (search) params.append('search', search);
+
+    const rawSearch = document.getElementById('raw-search-input').value.trim();
+    if (rawSearch) params.append('raw_search', rawSearch);
 
     // Get selected values from Choices.js instances
     const action = choicesInstances['action-filter']?.getValue(true);

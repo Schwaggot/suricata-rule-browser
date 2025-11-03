@@ -208,7 +208,7 @@ header h1 {
     margin-bottom: 20px;
 }
 
-#search-input {
+#search-input, #raw-search-input {
     flex: 1;
     padding: 10px 15px;
     border: 1px solid var(--border-color);
@@ -218,7 +218,7 @@ header h1 {
     color: var(--text-primary);
 }
 
-#search-input:focus {
+#search-input:focus, #raw-search-input:focus {
     outline: none;
     border-color: var(--primary-color);
 }

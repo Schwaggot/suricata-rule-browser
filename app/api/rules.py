@@ -103,6 +103,7 @@ async def get_rules(
         page: int = Query(1, ge=1, description="Page number"),
         page_size: int = Query(50, ge=1, le=1000, description="Number of rules per page"),
         search: Optional[str] = Query(None, description="Search in message, SID, and content"),
+        raw_search: Optional[str] = Query(None, description="Search in raw rule text"),
         action: Optional[List[str]] = Query(None, description="Filter by action (can specify multiple)"),
         protocol: Optional[List[str]] = Query(None, description="Filter by protocol (can specify multiple)"),
         classtype: Optional[List[str]] = Query(None,
@@ -121,6 +122,7 @@ async def get_rules(
     - **page**: Page number (1-indexed)
     - **page_size**: Number of rules per page
     - **search**: Search text (searches message, SID, and tags)
+    - **raw_search**: Search text (searches raw rule text)
     - **action**: Filter by action (alert, drop, reject, pass)
     - **protocol**: Filter by protocol
     - **classtype**: Filter by classification type
@@ -139,7 +141,7 @@ async def get_rules(
 
     # Define known filters (the ones already handled explicitly above)
     known_fields = {
-        "page", "page_size", "search", "action", "protocol", "classtype",
+        "page", "page_size", "search", "raw_search", "action", "protocol", "classtype",
         "sid", "source", "category", "enabled", "sort_by", "sort_order"
     }
 
@@ -152,14 +154,25 @@ async def get_rules(
     filtered_rules = _rules_cache.copy()
 
     # Apply filters
-    if search:
-        search_lower = search.lower()
-        filtered_rules = [
-            rule for rule in filtered_rules
-            if (rule.msg and search_lower in rule.msg.lower()) or
-               (rule.id and search_lower in str(rule.id)) or
-               any(search_lower in tag for tag in rule.tags)
-        ]
+    if search or raw_search:
+        def matches_search_criteria(rule):
+            # Standard search in msg, SID, and tags
+            if search:
+                search_lower = search.lower()
+                if ((rule.msg and search_lower in rule.msg.lower()) or
+                    (rule.id and search_lower in str(rule.id)) or
+                    any(search_lower in tag for tag in rule.tags)):
+                    return True
+
+            # Raw rule text search
+            if raw_search:
+                raw_search_lower = raw_search.lower()
+                if rule.raw_rule and raw_search_lower in rule.raw_rule.lower():
+                    return True
+
+            return False
+
+        filtered_rules = [rule for rule in filtered_rules if matches_search_criteria(rule)]
 
     if action:
         filtered_rules = [rule for rule in filtered_rules if rule.action.value in action]
